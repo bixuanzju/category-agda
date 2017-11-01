@@ -60,11 +60,40 @@ record Category : Set where
 
   infixr 3 _>~>_
 
+-- Empty category
+EMPTY : Category
+EMPTY = record
+          { Obj = Zero
+          ; _~>_ = λ _ _ → Zero
+          ; id~> = λ {T} → T
+          ; _>~>_ = λ {R} {S} → λ {}
+          ; law-id~>>~> = λ {S} {T} → λ ()
+          ; law->~>id~> = λ {S} → λ {}
+          ; law->~>>~> = λ {Q} {R} {S} → λ {}
+          }
+
+
+-- Another trivial category
+ONE : Category
+ONE = record
+        { Obj = One
+        ; _~>_ = λ S T -> One
+        ; id~> = <>
+        ; _>~>_ = λ _ _ → <>
+        ; law-id~>>~> = idOne1
+        ; law->~>id~> = idOne1
+        ; law->~>>~> = λ f g h → refl <>
+        } where
+        idOne1 : (f : One) -> f == <>
+        idOne1 <> = refl <>
+
+
+
 -- The Category of sets
 SET : Category
 SET = record
         { Obj = Set
-        ; _~>_ =  \S T -> S -> T
+        ; _~>_ = \S T -> S -> T
         ; id~> = id
         ; _>~>_ = _>>_
         ; law-id~>>~> = λ f → refl f
