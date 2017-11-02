@@ -1,7 +1,5 @@
 {-# OPTIONS --type-in-type #-}
 
--- Copied from CS410-17 by Mcbride
-
 module Categories where
 
 open import Prelude
@@ -32,8 +30,8 @@ infixl 2 _=$'_
 
 
 record Category : Set where
+  infixr 3 _>~>_
   field
-
     -- two types of thing
     Obj  : Set                  -- "objects"
     _~>_ : Obj -> Obj -> Set    -- "arrows" or "morphisms"
@@ -43,22 +41,21 @@ record Category : Set where
     _>~>_       : {R S T : Obj} ->  R ~> S  ->  S ~> T  ->  R ~> T
 
     -- Composition left unit law
-    law-id~>>~> : {S T : Obj}     (f : S ~> T) -> (id~> >~> f) == f
+    law-id~>>~> : {S T : Obj}     (f : S ~> T) -> id~> >~> f == f
     -- Composition right unit law
-    law->~>id~> : {S T : Obj}     (f : S ~> T) -> (f >~> id~>) == f
+    law->~>id~> : {S T : Obj}     (f : S ~> T) -> f >~> id~> == f
     -- Composition associative law
-    law->~>>~>  : {Q R S T : Obj} (f : Q ~> R)(g : R ~> S)(h : S ~> T) -> ((f >~> g) >~> h) == (f >~> (g >~> h))
+    law->~>>~>  : {Q R S T : Obj} (f : Q ~> R)(g : R ~> S)(h : S ~> T) -> (f >~> g) >~> h == f >~> (g >~> h)
 
 
   -- The so-called whiskering
-  whiskerl : {A B C : Obj} {g1 g2 : B ~> C} {f : A ~> B}  -> g1 == g2 -> (f >~> g1) == (f >~> g2)
+  whiskerl : {A B C : Obj} {g1 g2 : B ~> C} {f : A ~> B}  -> g1 == g2 -> f >~> g1 == f >~> g2
   whiskerl {f = f} (refl x) = refl (f >~> x)
 
-  whiskerr : {B C D : Obj} {g1 g2 : B ~> C} {h : C ~> D}  -> g1 == g2 -> (g1 >~> h) == (g2 >~> h)
+  whiskerr : {B C D : Obj} {g1 g2 : B ~> C} {h : C ~> D}  -> g1 == g2 -> g1 >~> h == g2 >~> h
   whiskerr {h = h} (refl x) = refl (x >~> h)
 
 
-  infixr 3 _>~>_
 
 -- Empty category
 EMPTY : Category
@@ -66,10 +63,10 @@ EMPTY = record
           { Obj = Zero
           ; _~>_ = λ _ _ → Zero
           ; id~> = λ {T} → T
-          ; _>~>_ = λ {R} {S} → λ {}
-          ; law-id~>>~> = λ {S} {T} → λ ()
-          ; law->~>id~> = λ {S} → λ {}
-          ; law->~>>~> = λ {Q} {R} {S} → λ {}
+          ; _>~>_ = λ x _ → magic x
+          ; law-id~>>~> = λ f → magic f
+          ; law->~>id~> = λ f → magic f
+          ; law->~>>~> = λ f g h → magic f
           }
 
 
@@ -77,15 +74,15 @@ EMPTY = record
 ONE : Category
 ONE = record
         { Obj = One
-        ; _~>_ = λ S T -> One
+        ; _~>_ = λ _ _ -> One
         ; id~> = <>
         ; _>~>_ = λ _ _ → <>
-        ; law-id~>>~> = idOne1
-        ; law->~>id~> = idOne1
-        ; law->~>>~> = λ f g h → refl <>
+        ; law-id~>>~> = idOne
+        ; law->~>id~> = idOne
+        ; law->~>>~> = λ _ _ _ → refl <>
         } where
-        idOne1 : (f : One) -> f == <>
-        idOne1 <> = refl <>
+        idOne : (f : One) -> f == <>
+        idOne <> = refl <>
 
 
 unique->= : (m n : Nat) (p q : m >= n) -> p == q
@@ -122,7 +119,7 @@ MONOID : {X : Set} {m : Monoid X} -> Category
 MONOID {X = X} {m = m} = record
            { Obj = One
            ; _~>_ = λ _ _ → X
-           ; id~> = λ {_} → ε
+           ; id~> = ε
            ; _>~>_ = λ a b → a ⋆ b
            ; law-id~>>~> = λ f → absorbL f
            ; law->~>id~> = λ f → absorbR f
@@ -130,7 +127,7 @@ MONOID {X = X} {m = m} = record
            } where open Monoid m
 
 
--- The Category of sets
+-- The category of sets
 SET : Category
 SET = record
         { Obj = Set
@@ -141,6 +138,9 @@ SET = record
         ; law->~>id~> = λ f → refl f
         ; law->~>>~> = λ f g h → refl (f >> (g >> h))
         }
+
+-- The category of preorders
+
 
 
 module FUNCTOR where
@@ -156,6 +156,5 @@ module FUNCTOR where
       F-map-id~> : {T : Obj C} -> F-map (id~> C {T}) == id~> D {F-Obj T}
       F-map->~> : {R S T : Obj C} (f : _~>_ C R S) (g : _~>_ C S T) ->
                   F-map (_>~>_ C f g) == _>~>_ D (F-map f) (F-map g)
-
 
 open FUNCTOR public

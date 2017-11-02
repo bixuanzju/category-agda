@@ -87,7 +87,7 @@ suc x +N y = suc (x +N y)      -- there are other choices
 
 data _==_ {X : Set} : X -> X -> Set where
   refl : (x : X) -> x == x           -- the relation that's "only reflexive"
-infix 3 _==_
+infix 2 _==_
 
 
 {-# BUILTIN EQUALITY _==_ #-}  -- we'll see what that's for, later
