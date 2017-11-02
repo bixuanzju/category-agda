@@ -88,6 +88,47 @@ ONE = record
         idOne1 <> = refl <>
 
 
+unique->= : (m n : Nat) (p q : m >= n) -> p == q
+unique->= m zero <> <> = refl <>
+unique->= zero (suc n) p ()
+unique->= (suc m) (suc n) p q = unique->= m n p q
+
+
+-- Preorder is a category (should probably generalize to any preorder)
+PREORDER-ℕ->= : Category
+PREORDER-ℕ->= = record
+                  { Obj = Nat
+                  ; _~>_ = _>=_
+                  ; id~> = λ {n} → refl->= n
+                  ; _>~>_ = λ {m n p} f g → trans->= m n p f g
+                  ; law-id~>>~> = λ {n m} f → unique->= n m _ _
+                  ; law->~>id~> = λ {n m} f → unique->= n m _ _
+                  ; law->~>>~> = λ {n m s t} f g h → unique->= n t _ _
+                  }
+
+
+record Monoid (X : Set) : Set where
+  infixr 5 _⋆_
+  field
+    ε : X
+    _⋆_ : X → X → X
+    absorbL : (x : X) → ε ⋆ x == x
+    absorbR : (x : X) → x ⋆ ε == x
+    assoc   : (x y z : X) → (x ⋆ y) ⋆ z == x ⋆ (y ⋆ z)
+
+
+-- Monoid is a category
+MONOID : {X : Set} {m : Monoid X} -> Category
+MONOID {X = X} {m = m} = record
+           { Obj = One
+           ; _~>_ = λ _ _ → X
+           ; id~> = λ {_} → ε
+           ; _>~>_ = λ a b → a ⋆ b
+           ; law-id~>>~> = λ f → absorbL f
+           ; law->~>id~> = λ f → absorbR f
+           ; law->~>>~> = λ f g h → assoc f g h
+           } where open Monoid m
+
 
 -- The Category of sets
 SET : Category

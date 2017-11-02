@@ -61,6 +61,9 @@ S * T = Sg S \ _ -> T
 
 infixr 4 _,_ _*_
 
+magic : Zero → {A : Set} → A
+magic ()
+
 
 ------------------------------------------------------------------------------
 -- natural numbers and addition
@@ -84,6 +87,8 @@ suc x +N y = suc (x +N y)      -- there are other choices
 
 data _==_ {X : Set} : X -> X -> Set where
   refl : (x : X) -> x == x           -- the relation that's "only reflexive"
+infix 3 _==_
+
 
 {-# BUILTIN EQUALITY _==_ #-}  -- we'll see what that's for, later
 
@@ -151,6 +156,12 @@ if ff then t else e = e
 caseTwo : forall {l}{P : Two -> Set l} -> P tt -> P ff -> (b : Two) -> P b
 caseTwo t f tt = t
 caseTwo t f ff = f
+
+_⊹_ : Set → Set → Set
+S ⊹ T = Sg Two (caseTwo S T)
+
+Dec : Set → Set
+Dec X = X ⊹ (X → Zero)
 
 
 ----------------------------------------------------------------------------
