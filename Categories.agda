@@ -4,31 +4,6 @@ module Categories where
 
 open import Prelude
 
-postulate
-  extensionality : {S : Set}{T : S -> Set}
-                   {f g : (x : S) -> T x} ->
-                   ((x : S) -> f x == g x) ->
-                   f == g
-
-imp : {S : Set}{T : S -> Set}(f : (x : S) -> T x){x : S} -> T x
-imp f {x} = f x
-
-extensionality' : {S : Set}{T : S -> Set}
-                  {f g : {x : S} -> T x} ->
-                  ((x : S) -> f {x} == g {x}) ->
-                  _==_ {forall {x : S} -> T x} f g
-extensionality' {f = f}{g = g} q =
-  refl imp =$= extensionality {f = \ x -> f {x}}{g = \ x -> g {x}} q
-
-_=$'_ : {S : Set}{T : S -> Set}
-        {f g : {x : S} -> T x} ->
-        _==_ {forall {x : S} -> T x} f g ->
-        (x : S) -> f {x} == g {x}
-refl f =$' x = refl (f {x})
-
-infixl 2 _=$'_
-
-
 record Category : Set where
   infixr 3 _>~>_
   field
@@ -50,10 +25,10 @@ record Category : Set where
 
   -- The so-called whiskering
   whiskerl : {A B C : Obj} {g1 g2 : B ~> C} {f : A ~> B}  -> g1 == g2 -> f >~> g1 == f >~> g2
-  whiskerl {f = f} (refl x) = refl (f >~> x)
+  whiskerl {f = f} refl = refl
 
   whiskerr : {B C D : Obj} {g1 g2 : B ~> C} {h : C ~> D}  -> g1 == g2 -> g1 >~> h == g2 >~> h
-  whiskerr {h = h} (refl x) = refl (x >~> h)
+  whiskerr {h = h} refl = refl
 
 
 
@@ -79,14 +54,14 @@ ONE = record
         ; _>~>_ = λ _ _ → <>
         ; law-id~>>~> = idOne
         ; law->~>id~> = idOne
-        ; law->~>>~> = λ _ _ _ → refl <>
+        ; law->~>>~> = λ _ _ _ → refl
         } where
         idOne : (f : One) -> f == <>
-        idOne <> = refl <>
+        idOne <> = refl
 
 
 unique->= : (m n : Nat) (p q : m >= n) -> p == q
-unique->= m zero <> <> = refl <>
+unique->= m zero <> <> = refl
 unique->= zero (suc n) p ()
 unique->= (suc m) (suc n) p q = unique->= m n p q
 
@@ -104,7 +79,7 @@ PREORDER-ℕ->= = record
                   }
 
 
-record Monoid (X : Set) : Set where
+record Monoid (X : Set): Set where
   infixr 5 _⋆_
   field
     ε : X
@@ -112,11 +87,12 @@ record Monoid (X : Set) : Set where
     absorbL : (x : X) → ε ⋆ x == x
     absorbR : (x : X) → x ⋆ ε == x
     assoc   : (x y z : X) → (x ⋆ y) ⋆ z == x ⋆ (y ⋆ z)
+open Monoid {{...}} public
 
 
 -- Monoid is a category
-MONOID : {X : Set} {m : Monoid X} -> Category
-MONOID {X = X} {m = m} = record
+MONOID : {X : Set} {{m : Monoid X}} -> Category
+MONOID  {X} = record
            { Obj = One
            ; _~>_ = λ _ _ → X
            ; id~> = ε
@@ -124,7 +100,7 @@ MONOID {X = X} {m = m} = record
            ; law-id~>>~> = λ f → absorbL f
            ; law->~>id~> = λ f → absorbR f
            ; law->~>>~> = λ f g h → assoc f g h
-           } where open Monoid m
+           }
 
 
 -- The category of sets
@@ -134,12 +110,59 @@ SET = record
         ; _~>_ = \S T -> S -> T
         ; id~> = id
         ; _>~>_ = _>>_
-        ; law-id~>>~> = λ f → refl f
-        ; law->~>id~> = λ f → refl f
-        ; law->~>>~> = λ f g h → refl (f >> (g >> h))
+        ; law-id~>>~> = λ _ → refl
+        ; law->~>id~> = λ _ → refl
+        ; law->~>>~> = λ _ _ _ → refl
         }
 
--- The category of preorders
+-- Monoid homomorphism
+record MonoidHom {X} {{MX : Monoid X}} {Y} {{MY : Monoid Y}} (f : X  → Y) : Set where
+  field
+    respε : f ε == ε
+    resp⋆ : ∀ x x' → f (x ⋆ x') == f x ⋆ f x'
+
+SomeMonoid : Set
+SomeMonoid = Sg Set Monoid
+
+
+-- The category of monoids
+CAT-MONOID : Category
+CAT-MONOID  = record
+               { Obj = SomeMonoid
+               ; _~>_ = λ m n → Sg (fst m → fst n) λ f → MonoidHom {{snd m}} {{snd n}} f
+               ; id~> = mid
+               ; _>~>_ = mcom
+               -- The following are bit hard to prove, something to do with proof irrelevance
+               ; law-id~>>~> = {!!}
+               ; law->~>id~> = {!!}
+               ; law->~>>~> = {!!}
+               } where
+                 mid : {T : SomeMonoid} → Sg (fst T → fst T) (λ f → MonoidHom {{snd T}} {{snd T}} f)
+                 mid {X , m} = id , record { respε = refl ; resp⋆ = λ _ _ → refl }
+
+                 mcom : {R S T : SomeMonoid} →
+                        Sg (fst R → fst S) (λ f → MonoidHom {{snd R}} {{snd S}} f) →
+                        Sg (fst S → fst T) (λ f → MonoidHom {{snd S}} {{snd T}}f) →
+                        Sg (fst R → fst T) (λ f → MonoidHom {{snd R}} {{snd T}} f)
+                 mcom {R , m} {S , n} {T , s} (f , fm) (g , gm)
+                   = let instance
+                           -- Bring instances into scope
+                           _ : Monoid S
+                           _ = n
+                           _ : Monoid R
+                           _ = m
+                           _ : Monoid T
+                           _ = s
+                     in
+                     f >> g , record { respε = g (f ε) ≡⟨ cong g (MonoidHom.respε fm) ⟩
+                                               g ε  ≡⟨ MonoidHom.respε gm ⟩
+                                               ε
+                                               □
+                                     ; resp⋆ = λ a b → g (f (a ⋆ b)) ≡⟨ cong g (MonoidHom.resp⋆ fm a b) ⟩
+                                                       g (f a ⋆ f b) ≡⟨ MonoidHom.resp⋆ gm (f a) (f b) ⟩
+                                                       g (f a) ⋆ g (f b)
+                                                       □
+                                     }
 
 
 

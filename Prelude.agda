@@ -53,8 +53,8 @@ record Sg (S : Set)(T : S -> Set) : Set where  -- Sg is short for "Sigma"
   field -- introduces a bunch of fields, listed with their types
     fst : S
     snd : T fst
--- make _*_ from Sg ?
 open Sg public
+
 
 _*_ : Set -> Set -> Set
 S * T = Sg S \ _ -> T
@@ -85,8 +85,8 @@ suc x +N y = suc (x +N y)      -- there are other choices
 -- equality
 ------------------------------------------------------------------------------
 
-data _==_ {X : Set} : X -> X -> Set where
-  refl : (x : X) -> x == x           -- the relation that's "only reflexive"
+data _==_ {X : Set} (x : X) : X -> Set where
+  refl : x == x           -- the relation that's "only reflexive"
 infix 2 _==_
 
 
@@ -94,24 +94,34 @@ infix 2 _==_
 
 _=$=_ : {X Y : Set}{f f' : X -> Y}{x x' : X} ->
         f == f' -> x == x' -> f x == f' x'
-refl f =$= refl x = refl (f x)
+refl =$= refl = refl
 
 _=$_ : {S : Set}{T : S -> Set}{f g : (x : S) -> T x} -> (f == g) -> (x : S) -> f x == g x
-refl f =$ x = refl (f x)
+refl =$ x = refl
 
 infixl 2 _=$=_ _=$_
 
 sym : {X : Set}{x y : X} -> x == y -> y == x
-sym (refl x) = refl x
+sym refl = refl
 
-_[QED] : {X : Set}(x : X) -> x == x
-x [QED] = refl x
-_=[_>=_ : {X : Set}(x : X){y z : X} -> x == y -> y == z -> x == z
-x =[ refl .x >= q = q
-_=<_]=_ : {X : Set}(x : X){y z : X} -> y == x -> y == z -> x == z
-x =< refl .x ]= q = q
-infixr 1 _=[_>=_ _=<_]=_
-infixr 2 _[QED]
+subst : ∀ {X : Set} {s t : X} → s == t → (P : X → Set) → P s → P t
+subst refl P x = x
+
+cong : ∀ {X : Set}{Y : Set}(f : X → Y){x y} → x == y → f x == f y
+cong f refl = refl
+
+_□ : {X : Set} (x : X) → x == x
+x □ = refl
+
+_≡⟨_⟩_  : ∀ {X : Set} (x : X) {y z} → x == y → y == z → x == z
+_ ≡⟨ refl ⟩ q = q
+
+_⟨_⟩≡_ : ∀ {X : Set} (x : X) {y z} → y == x → y == z → x == z
+_ ⟨ refl ⟩≡ q = q
+
+
+infixr 1 _≡⟨_⟩_ _⟨_⟩≡_
+infixr 2 _□
 
 
 ------------------------------------------------------------------------------
