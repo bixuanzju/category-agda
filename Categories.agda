@@ -157,8 +157,8 @@ CAT-MONOID  = record
                                                g ε  ≡⟨ MonoidHom.respε gm ⟩
                                                ε
                                                □
-                                     ; resp⋆ = λ a b → g (f (a ⋆ b)) ≡⟨ cong g (MonoidHom.resp⋆ fm a b) ⟩
-                                                       g (f a ⋆ f b) ≡⟨ MonoidHom.resp⋆ gm (f a) (f b) ⟩
+                                     ; resp⋆ = λ a b → g (f (a ⋆ b))     ≡⟨ cong g (MonoidHom.resp⋆ fm a b) ⟩
+                                                       g (f a ⋆ f b)     ≡⟨ MonoidHom.resp⋆ gm (f a) (f b) ⟩
                                                        g (f a) ⋆ g (f b)
                                                        □
                                      }
@@ -171,12 +171,59 @@ module FUNCTOR where
   record _=>_ (C D : Category) : Set where
     field
       -- Two mappings
-      F-Obj : Obj C -> Obj D
-      F-map : {S T : Obj C} -> _~>_ C S T -> _~>_ D (F-Obj S) (F-Obj T)
+      𝔽₀ : Obj C → Obj D
+      𝔽₁ : {S T : Obj C} → _~>_ C S T → _~>_ D (𝔽₀ S) (𝔽₀ T)
 
       -- Two laws
-      F-map-id~> : {T : Obj C} -> F-map (id~> C {T}) == id~> D {F-Obj T}
+      F-map-id~> : {T : Obj C} -> 𝔽₁ (id~> C {T}) == id~> D {𝔽₀ T}
       F-map->~> : {R S T : Obj C} (f : _~>_ C R S) (g : _~>_ C S T) ->
-                  F-map (_>~>_ C f g) == _>~>_ D (F-map f) (F-map g)
+                  𝔽₁ (_>~>_ C f g) == _>~>_ D (𝔽₁ f) (𝔽₁ g)
 
 open FUNCTOR public
+
+
+-- Identity functor
+IDFunctor : ∀ {C} → C => C
+IDFunctor = record { 𝔽₀ = id ; 𝔽₁ = id ; F-map-id~> = refl ; F-map->~> = λ _ _ → refl }
+
+
+-- Functor composition
+module FUNCTOR-CP {C D E : Category} where
+  open _=>_
+  open Category
+
+  _>=>_ : C => D → D => E → C => E
+  𝔽₀ (F >=> G) = 𝔽₀ F >> 𝔽₀ G
+  𝔽₁ (F >=> G) = 𝔽₁ F >> 𝔽₁ G
+  F-map-id~> (F >=> G) = 𝔽₁ G (𝔽₁ F (id~> C))         ≡⟨ cong (𝔽₁ G) (F-map-id~> F) ⟩
+                         𝔽₁ G (id~> D)                ≡⟨ F-map-id~> G ⟩
+                         id~> E
+                         □
+  F-map->~> (F >=> G) f g =  𝔽₁ G (𝔽₁ F (_>~>_ C f g))                      ≡⟨ cong (𝔽₁ G) (F-map->~> F f g) ⟩
+                             𝔽₁ G (_>~>_ D (𝔽₁ F f) (𝔽₁ F g))               ≡⟨ F-map->~> G (𝔽₁ F f) (𝔽₁ F g) ⟩
+                             _>~>_ E (𝔽₁ G (𝔽₁ F f)) (𝔽₁ G (𝔽₁ F g))
+                             □
+
+
+open FUNCTOR-CP public
+
+
+-- The category of categories
+CATEGORY : Category
+CATEGORY = record
+             { Obj = Category
+             ; _~>_ =  _=>_
+             ; id~> = IDFunctor
+             ; _>~>_ = _>=>_
+             ; law-id~>>~> = λ _ → fid
+             ; law->~>id~> = λ _ → fid'
+             ; law->~>>~> = λ {Q R S T} f g h → fcp {Q} {R} {S} {T} {f} {g} {h}
+             } where
+             fid : ∀{C D}{f : C => D} → IDFunctor >=> f == f
+             fid {f = f} = {!!}
+
+             fid' : ∀ {C D}{f : C => D} → (f >=> IDFunctor) == f
+             fid' = {!!}
+
+             fcp : ∀ {Q R S T} {f : Q => R} {g : R => S} {h : S => T} → (f >=> g) >=> h == f >=> (g >=> h)
+             fcp = {!!}
