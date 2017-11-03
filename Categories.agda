@@ -16,18 +16,18 @@ record Category : Set where
     _>~>_       : {R S T : Obj} ->  R ~> S  ->  S ~> T  ->  R ~> T
 
     -- Composition left unit law
-    law-id~>>~> : {S T : Obj}     (f : S ~> T) -> id~> >~> f == f
+    law-id~>>~> : {S T : Obj}     (f : S ~> T) -> id~> >~> f ≡ f
     -- Composition right unit law
-    law->~>id~> : {S T : Obj}     (f : S ~> T) -> f >~> id~> == f
+    law->~>id~> : {S T : Obj}     (f : S ~> T) -> f >~> id~> ≡ f
     -- Composition associative law
-    law->~>>~>  : {Q R S T : Obj} (f : Q ~> R)(g : R ~> S)(h : S ~> T) -> (f >~> g) >~> h == f >~> (g >~> h)
+    law->~>>~>  : {Q R S T : Obj} (f : Q ~> R)(g : R ~> S)(h : S ~> T) -> (f >~> g) >~> h ≡ f >~> (g >~> h)
 
 
   -- The so-called whiskering
-  whiskerl : {A B C : Obj} {g1 g2 : B ~> C} {f : A ~> B}  -> g1 == g2 -> f >~> g1 == f >~> g2
+  whiskerl : {A B C : Obj} {g1 g2 : B ~> C} {f : A ~> B}  -> g1 ≡ g2 -> f >~> g1 ≡ f >~> g2
   whiskerl {f = f} refl = refl
 
-  whiskerr : {B C D : Obj} {g1 g2 : B ~> C} {h : C ~> D}  -> g1 == g2 -> g1 >~> h == g2 >~> h
+  whiskerr : {B C D : Obj} {g1 g2 : B ~> C} {h : C ~> D}  -> g1 ≡ g2 -> g1 >~> h ≡ g2 >~> h
   whiskerr {h = h} refl = refl
 
 
@@ -56,11 +56,11 @@ ONE = record
         ; law->~>id~> = idOne
         ; law->~>>~> = λ _ _ _ → refl
         } where
-        idOne : (f : One) -> f == <>
+        idOne : (f : One) -> f ≡ <>
         idOne <> = refl
 
 
-unique->= : (m n : Nat) (p q : m >= n) -> p == q
+unique->= : (m n : Nat) (p q : m >= n) -> p ≡ q
 unique->= m zero <> <> = refl
 unique->= zero (suc n) p ()
 unique->= (suc m) (suc n) p q = unique->= m n p q
@@ -84,9 +84,9 @@ record Monoid (X : Set): Set where
   field
     ε : X
     _⋆_ : X → X → X
-    absorbL : (x : X) → ε ⋆ x == x
-    absorbR : (x : X) → x ⋆ ε == x
-    assoc   : (x y z : X) → (x ⋆ y) ⋆ z == x ⋆ (y ⋆ z)
+    absorbL : (x : X) → ε ⋆ x ≡ x
+    absorbR : (x : X) → x ⋆ ε ≡ x
+    assoc   : (x y z : X) → (x ⋆ y) ⋆ z ≡ x ⋆ (y ⋆ z)
 open Monoid {{...}} public
 
 
@@ -118,8 +118,8 @@ SET = record
 -- Monoid homomorphism
 record MonoidHom {X} {{MX : Monoid X}} {Y} {{MY : Monoid Y}} (f : X  → Y) : Set where
   field
-    respε : f ε == ε
-    resp⋆ : ∀ x x' → f (x ⋆ x') == f x ⋆ f x'
+    respε : f ε ≡ ε
+    resp⋆ : ∀ x x' → f (x ⋆ x') ≡ f x ⋆ f x'
 
 SomeMonoid : Set
 SomeMonoid = Sg Set Monoid
@@ -175,16 +175,16 @@ module FUNCTOR where
       𝔽₁ : {S T : Obj C} → _~>_ C S T → _~>_ D (𝔽₀ S) (𝔽₀ T)
 
       -- Two laws
-      F-map-id~> : {T : Obj C} -> 𝔽₁ (id~> C {T}) == id~> D {𝔽₀ T}
+      F-map-id~> : {T : Obj C} -> 𝔽₁ (id~> C {T}) ≡ id~> D {𝔽₀ T}
       F-map->~> : {R S T : Obj C} (f : _~>_ C R S) (g : _~>_ C S T) ->
-                  𝔽₁ (_>~>_ C f g) == _>~>_ D (𝔽₁ f) (𝔽₁ g)
+                  𝔽₁ (_>~>_ C f g) ≡ _>~>_ D (𝔽₁ f) (𝔽₁ g)
 
 open FUNCTOR public
 
 
 -- Identity functor
-IDFunctor : ∀ {C} → C => C
-IDFunctor = record { 𝔽₀ = id ; 𝔽₁ = id ; F-map-id~> = refl ; F-map->~> = λ _ _ → refl }
+Functor-id : ∀ {C} → C => C
+Functor-id = record { 𝔽₀ = id ; 𝔽₁ = id ; F-map-id~> = refl ; F-map->~> = λ _ _ → refl }
 
 
 -- Functor composition
@@ -208,22 +208,56 @@ module FUNCTOR-CP {C D E : Category} where
 open FUNCTOR-CP public
 
 
+-- Functor (extensional) equivalence:
+-- 𝔽₀ ≡ 𝔾₀
+-- 𝔽₁ ≡ 𝔾₁
+-- F-map-id~> ≡ G-map-id~>
+-- F-map->~> ≡ G-map->~>
+Functor≡ : {C D : Category} (F G : C => D) → Set
+Functor≡ {C} {D}
+  record { 𝔽₀ = 𝔽₀ ; 𝔽₁ = 𝔽₁ ; F-map-id~> = F-map-id~> ; F-map->~> = F-map->~> }
+  record { 𝔽₀ = 𝔾₀ ; 𝔽₁ = 𝔾₁ ; F-map-id~> = G-map-id~> ; F-map->~> = G-map->~> }
+  = Sg (𝔽₀ ≡ 𝔾₀)
+       λ { refl  → -- Patterns lambdas
+         Sg (_≡_ {∀ {S T : Category.Obj C} → (C Category.~> S) T → (D Category.~> 𝔽₀ S) (𝔾₀ T)} 𝔽₁ 𝔾₁)
+            λ { refl ->
+                _≡_ {forall {T : Category.Obj C} → 𝔽₁ (Category.id~> C {T}) ≡ Category.id~> D} F-map-id~> G-map-id~>
+                *
+                _≡_ {forall {R S T : Category.Obj C} (f : (C Category.~> R) S) (g : (C Category.~> S) T) →
+                     𝔽₁ ((C Category.>~> f) g) ≡ (D Category.>~> 𝔽₁ f) (𝔽₁ g)}
+                     F-map->~>  G-map->~>
+              }}
+
+
+Functor≡→≡ : {C D : Category}{F G : C => D} → Functor≡ F G → F ≡ G
+Functor≡→≡ (refl , (refl , (refl , refl)))  = refl
+
+
 -- The category of categories
 CATEGORY : Category
 CATEGORY = record
              { Obj = Category
              ; _~>_ =  _=>_
-             ; id~> = IDFunctor
+             ; id~> = Functor-id
              ; _>~>_ = _>=>_
-             ; law-id~>>~> = λ _ → fid
-             ; law->~>id~> = λ _ → fid'
-             ; law->~>>~> = λ {Q R S T} f g h → fcp {Q} {R} {S} {T} {f} {g} {h}
-             } where
-             fid : ∀{C D}{f : C => D} → IDFunctor >=> f == f
-             fid {f = f} = {!!}
-
-             fid' : ∀ {C D}{f : C => D} → (f >=> IDFunctor) == f
-             fid' = {!!}
-
-             fcp : ∀ {Q R S T} {f : Q => R} {g : R => S} {h : S => T} → (f >=> g) >=> h == f >=> (g >=> h)
-             fcp = {!!}
+             ; law-id~>>~> =
+               λ F → Functor≡→≡ (refl , refl ,
+                 extensionality' (λ x → eqUnique _ _) ,
+                 extensionality' λ x →
+                   extensionality' λ y →
+                     extensionality' λ z →
+                       extensionality λ g → extensionality λ h → eqUnique _ _)
+             ; law->~>id~> =
+               λ F → Functor≡→≡ (refl , refl ,
+                 extensionality' (λ x → eqUnique _ _) ,
+                   extensionality' λ x →
+                     extensionality' λ y →
+                       extensionality' λ z → extensionality λ g → extensionality λ h → eqUnique _ _)
+             ; law->~>>~> =
+               λ F G H → Functor≡→≡ (refl , refl ,
+                 extensionality' (λ x → eqUnique _ _) ,
+                   extensionality' λ x →
+                     extensionality' λ y →
+                       extensionality' λ z →
+                         extensionality λ g → extensionality λ h → eqUnique _ _)
+             } where open _=>_

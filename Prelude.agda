@@ -94,38 +94,38 @@ suc x +N y = suc (x +N y)      -- there are other choices
 -- equality
 ------------------------------------------------------------------------------
 
-data _==_ {X : Set} (x : X) : X -> Set where
-  refl : x == x           -- the relation that's "only reflexive"
-infix 2 _==_
+data _≡_ {X : Set} (x : X) : X -> Set where
+  refl : x ≡ x           -- the relation that's "only reflexive"
+infix 2 _≡_
 
 
-{-# BUILTIN EQUALITY _==_ #-}  -- we'll see what that's for, later
+{-# BUILTIN EQUALITY _≡_ #-}  -- we'll see what that's for, later
 
 _=$=_ : {X Y : Set}{f f' : X -> Y}{x x' : X} ->
-        f == f' -> x == x' -> f x == f' x'
+        f ≡ f' -> x ≡ x' -> f x ≡ f' x'
 refl =$= refl = refl
 
-_=$_ : {S : Set}{T : S -> Set}{f g : (x : S) -> T x} -> (f == g) -> (x : S) -> f x == g x
+_=$_ : {S : Set}{T : S -> Set}{f g : (x : S) -> T x} -> (f ≡ g) -> (x : S) -> f x ≡ g x
 refl =$ x = refl
 
 infixl 2 _=$=_ _=$_
 
-sym : {X : Set}{x y : X} -> x == y -> y == x
+sym : {X : Set}{x y : X} -> x ≡ y -> y ≡ x
 sym refl = refl
 
-subst : ∀ {X : Set} {s t : X} → s == t → (P : X → Set) → P s → P t
+subst : ∀ {X : Set} {s t : X} → s ≡ t → (P : X → Set) → P s → P t
 subst refl P x = x
 
-cong : ∀ {X : Set}{Y : Set}(f : X → Y){x y} → x == y → f x == f y
+cong : ∀ {X : Set}{Y : Set}(f : X → Y){x y} → x ≡ y → f x ≡ f y
 cong f refl = refl
 
-_□ : {X : Set} (x : X) → x == x
+_□ : {X : Set} (x : X) → x ≡ x
 x □ = refl
 
-_≡⟨_⟩_  : ∀ {X : Set} (x : X) {y z} → x == y → y == z → x == z
+_≡⟨_⟩_  : ∀ {X : Set} (x : X) {y z} → x ≡ y → y ≡ z → x ≡ z
 _ ≡⟨ refl ⟩ q = q
 
-_⟨_⟩≡_ : ∀ {X : Set} (x : X) {y z} → y == x → y == z → x == z
+_⟨_⟩≡_ : ∀ {X : Set} (x : X) {y z} → y ≡ x → y ≡ z → x ≡ z
 _ ⟨ refl ⟩≡ q = q
 
 
@@ -212,3 +212,30 @@ primitive       -- these are baked in; they even work!
   primStringAppend    : String -> String -> String
   primStringToList    : String -> List Char
   primStringFromList  : List Char -> String
+
+
+
+----------------------------------------------------------------------------
+-- Extensionality
+----------------------------------------------------------------------------
+
+postulate
+  extensionality : {S : Set}{T : S -> Set}
+                   {f g : (x : S) -> T x} ->
+                   ((x : S) -> f x ≡ g x) ->
+                   f ≡ g
+
+imp : {S : Set}{T : S -> Set}(f : (x : S) -> T x){x : S} -> T x
+imp f {x} = f x
+
+
+extensionality' : {S : Set}{T : S -> Set}
+                   {f g : {x : S} -> T x} ->
+                   ((x : S) -> f {x} ≡ g {x}) ->
+                   _≡_ {∀ {x} -> T x} f g
+extensionality' {f = f} {g = g} q =  cong imp (extensionality {f = λ x → f {x}} {g = λ x → g {x}} q)
+
+
+-- Unique equality proof
+eqUnique : {X : Set}{x y : X}(p q : x ≡ y) -> p ≡ q
+eqUnique refl refl = refl
