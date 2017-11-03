@@ -129,21 +129,20 @@ SomeMonoid = Sg Set Monoid
 CAT-MONOID : Category
 CAT-MONOID  = record
                { Obj = SomeMonoid
-               ; _~>_ = λ m n → Sg (fst m → fst n) λ f → MonoidHom {{snd m}} {{snd n}} f
+               ; _~>_ = λ m n → Prf (fst m → fst n) λ f → MonoidHom {{snd m}} {{snd n}} f
                ; id~> = mid
                ; _>~>_ = mcom
-               -- The following are bit hard to prove, something to do with proof irrelevance
-               ; law-id~>>~> = {!!}
-               ; law->~>id~> = {!!}
-               ; law->~>>~> = {!!}
+               ; law-id~>>~> = λ _ → refl
+               ; law->~>id~> = λ _ → refl
+               ; law->~>>~> = λ _ _ _ → refl
                } where
-                 mid : {T : SomeMonoid} → Sg (fst T → fst T) (λ f → MonoidHom {{snd T}} {{snd T}} f)
+                 mid : {T : SomeMonoid} → Prf (fst T → fst T) (λ f → MonoidHom {{snd T}} {{snd T}} f)
                  mid {X , m} = id , record { respε = refl ; resp⋆ = λ _ _ → refl }
 
                  mcom : {R S T : SomeMonoid} →
-                        Sg (fst R → fst S) (λ f → MonoidHom {{snd R}} {{snd S}} f) →
-                        Sg (fst S → fst T) (λ f → MonoidHom {{snd S}} {{snd T}}f) →
-                        Sg (fst R → fst T) (λ f → MonoidHom {{snd R}} {{snd T}} f)
+                        Prf (fst R → fst S) (λ f → MonoidHom {{snd R}} {{snd S}} f) →
+                        Prf (fst S → fst T) (λ f → MonoidHom {{snd S}} {{snd T}} f) →
+                        Prf (fst R → fst T) (λ f → MonoidHom {{snd R}} {{snd T}} f)
                  mcom {R , m} {S , n} {T , s} (f , fm) (g , gm)
                    = let instance
                            -- Bring instances into scope

@@ -56,6 +56,15 @@ record Sg (S : Set)(T : S -> Set) : Set where  -- Sg is short for "Sigma"
 open Sg public
 
 
+-- A variant of Sigma type with the second field annotated as irrelevant
+record Prf (S : Set)(T : (S -> Set)) : Set where
+  constructor _,_
+  field
+    elem : S
+    .prf : (T elem)
+open Prf public
+
+
 _*_ : Set -> Set -> Set
 S * T = Sg S \ _ -> T
 
