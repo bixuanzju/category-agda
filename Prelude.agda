@@ -7,21 +7,21 @@ module Prelude where
 ------------------------------------------------------------------------------
 
 -- the polymorphic identity function
-id : {X : Set} -> X -> X
+id : {X : Set} → X → X
 id x = x
 
 -- standard composition: f << g is "f after g"
-_<<_ : {X Y Z : Set} -> (Y -> Z) -> (X -> Y) -> (X -> Z)
+_<<_ : {X Y Z : Set} → (Y → Z) → (X → Y) → (X → Z)
 (f << g) x = f (g x)
 
 -- diagrammatic composition: f >> g is "f then g"
-_>>_ : {X Y Z : Set} -> (X -> Y) -> (Y -> Z) -> (X -> Z)
+_>>_ : {X Y Z : Set} → (X → Y) → (Y → Z) → (X → Z)
                      --       ^^^^^^^^          dominoes!
 (f >> g) x = g (f x)
 infixr 5 _>>_
 
 -- infix application
-_$_ : {S : Set}{T : S -> Set}(f : (x : S) -> T x)(s : S) -> T s
+_$_ : {S : Set}{T : S → Set}(f : (x : S) → T x)(s : S) → T s
 f $ s = f s
 infixl 2 _$_
 
@@ -44,11 +44,11 @@ record One : Set where
 
 data _+_ (S : Set)(T : Set) : Set where -- "where" wants an indented block
   -- to offer a choice of constructors, list them with their types
-  inl : S -> S + T     -- constructors can pack up stuff
-  inr : T -> S + T
+  inl : S → S + T     -- constructors can pack up stuff
+  inr : T → S + T
   -- in Haskell, this was called "Either S T"
 
-record Sg (S : Set)(T : S -> Set) : Set where  -- Sg is short for "Sigma"
+record Sg (S : Set)(T : S → Set) : Set where  -- Sg is short for "Sigma"
   constructor _,_
   field -- introduces a bunch of fields, listed with their types
     fst : S
@@ -57,7 +57,7 @@ open Sg public
 
 
 -- A variant of Sigma type with the second field annotated as irrelevant
-record Prf (S : Set)(T : (S -> Set)) : Set where
+record Prf (S : Set)(T : (S → Set)) : Set where
   constructor _,_
   field
     elem : S
@@ -65,8 +65,8 @@ record Prf (S : Set)(T : (S -> Set)) : Set where
 open Prf public
 
 
-_*_ : Set -> Set -> Set
-S * T = Sg S \ _ -> T
+_*_ : Set → Set → Set
+S * T = Sg S λ _ → T
 
 infixr 4 _,_ _*_
 
@@ -80,12 +80,12 @@ magic ()
 
 data Nat : Set where
   zero : Nat
-  suc  : Nat -> Nat     -- recursive data type
+  suc  : Nat → Nat     -- recursive data type
 
 {-# BUILTIN NATURAL Nat #-}
 --  ^^^^^^^^^^^^^^^^^^^       this pragma lets us use decimal notation
 
-_+N_ : Nat -> Nat -> Nat
+_+N_ : Nat → Nat → Nat
 zero  +N y = y
 suc x +N y = suc (x +N y)      -- there are other choices
 
@@ -94,23 +94,23 @@ suc x +N y = suc (x +N y)      -- there are other choices
 -- equality
 ------------------------------------------------------------------------------
 
-data _≡_ {X : Set} (x : X) : X -> Set where
+data _≡_ {X : Set} (x : X) : X → Set where
   refl : x ≡ x           -- the relation that's "only reflexive"
 infix 2 _≡_
 
 
 {-# BUILTIN EQUALITY _≡_ #-}  -- we'll see what that's for, later
 
-_=$=_ : {X Y : Set}{f f' : X -> Y}{x x' : X} ->
-        f ≡ f' -> x ≡ x' -> f x ≡ f' x'
+_=$=_ : {X Y : Set}{f f' : X → Y}{x x' : X} →
+        f ≡ f' → x ≡ x' → f x ≡ f' x'
 refl =$= refl = refl
 
-_=$_ : {S : Set}{T : S -> Set}{f g : (x : S) -> T x} -> (f ≡ g) -> (x : S) -> f x ≡ g x
+_=$_ : {S : Set}{T : S → Set}{f g : (x : S) → T x} → (f ≡ g) → (x : S) → f x ≡ g x
 refl =$ x = refl
 
 infixl 2 _=$=_ _=$_
 
-sym : {X : Set}{x y : X} -> x ≡ y -> y ≡ x
+sym : {X : Set}{x y : X} → x ≡ y → y ≡ x
 sym refl = refl
 
 subst : ∀ {X : Set} {s t : X} → s ≡ t → (P : X → Set) → P s → P t
@@ -137,22 +137,22 @@ infixr 2 _□
 -- greater-than-or-equals
 ------------------------------------------------------------------------------
 
-_>=_ : Nat -> Nat -> Set
+_>=_ : Nat → Nat → Set
 x     >= zero   = One
 zero  >= suc y  = Zero
 suc x >= suc y  = x >= y
 
-refl->= : (n : Nat) -> n >= n
+refl->= : (n : Nat) → n >= n
 refl->= zero    = record {}
 refl->= (suc n) = refl->= n
 
-trans->= : (x y z : Nat) -> x >= y -> y >= z -> x >= z
+trans->= : (x y z : Nat) → x >= y → y >= z → x >= z
 trans->=      x       y  zero    x>=y y>=z = record {}
 trans->=      x  zero    (suc z) x>=y ()
 trans->= zero    (suc y) (suc z) ()   y>=z
 trans->= (suc x) (suc y) (suc z) x>=y y>=z = trans->= x y z x>=y y>=z
 
-suc->= : (x : Nat) -> suc x >= x
+suc->= : (x : Nat) → suc x >= x
 suc->= zero    = <>
 suc->= (suc x) = suc->= x
 
@@ -167,12 +167,12 @@ data Two : Set where tt ff : Two
 {-# BUILTIN FALSE ff #-}
 
 -- nondependent conditional with traditional syntax
-if_then_else_ : forall {l}{X : Set l} -> Two -> X -> X -> X
+if_then_else_ : ∀ {l}{X : Set l} → Two → X → X → X
 if tt then t else e = t
 if ff then t else e = e
 
 -- dependent conditional cooked for partial application
-caseTwo : forall {l}{P : Two -> Set l} -> P tt -> P ff -> (b : Two) -> P b
+caseTwo : ∀ {l}{P : Two → Set l} → P tt → P ff → (b : Two) → P b
 caseTwo t f tt = t
 caseTwo t f ff = f
 
@@ -189,7 +189,7 @@ Dec X = X ⊹ (X → Zero)
 
 data List (X : Set) : Set where
   []   : List X
-  _,-_ : (x : X)(xs : List X) -> List X
+  _,-_ : (x : X)(xs : List X) → List X
 infixr 4 _,-_
 {-# COMPILE GHC List = data [] ([] | (:)) #-}
 {-# BUILTIN LIST List #-}
@@ -208,10 +208,10 @@ postulate       -- this means that we just suppose the following things exist...
 {-# BUILTIN STRING String #-}
 
 primitive       -- these are baked in; they even work!
-  primCharEquality    : Char -> Char -> Two
-  primStringAppend    : String -> String -> String
-  primStringToList    : String -> List Char
-  primStringFromList  : List Char -> String
+  primCharEquality    : Char → Char → Two
+  primStringAppend    : String → String → String
+  primStringToList    : String → List Char
+  primStringFromList  : List Char → String
 
 
 
@@ -220,22 +220,22 @@ primitive       -- these are baked in; they even work!
 ----------------------------------------------------------------------------
 
 postulate
-  extensionality : {S : Set}{T : S -> Set}
-                   {f g : (x : S) -> T x} ->
-                   ((x : S) -> f x ≡ g x) ->
+  extensionality : {S : Set}{T : S → Set}
+                   {f g : (x : S) → T x} →
+                   ((x : S) → f x ≡ g x) →
                    f ≡ g
 
-imp : {S : Set}{T : S -> Set}(f : (x : S) -> T x){x : S} -> T x
+imp : {S : Set}{T : S → Set}(f : (x : S) → T x){x : S} → T x
 imp f {x} = f x
 
 
-extensionality' : {S : Set}{T : S -> Set}
-                   {f g : {x : S} -> T x} ->
-                   ((x : S) -> f {x} ≡ g {x}) ->
-                   _≡_ {∀ {x} -> T x} f g
+extensionality' : {S : Set}{T : S → Set}
+                   {f g : {x : S} → T x} →
+                   ((x : S) → f {x} ≡ g {x}) →
+                   _≡_ {∀ {x} → T x} f g
 extensionality' {f = f} {g = g} q =  cong imp (extensionality {f = λ x → f {x}} {g = λ x → g {x}} q)
 
 
 -- Unique equality proof
-eqUnique : {X : Set}{x y : X}(p q : x ≡ y) -> p ≡ q
+eqUnique : {X : Set}{x y : X}(p q : x ≡ y) → p ≡ q
 eqUnique refl refl = refl

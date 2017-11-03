@@ -9,25 +9,25 @@ record Category : Set where
   field
     -- two types of thing
     Obj  : Set                  -- "objects"
-    _~>_ : Obj -> Obj -> Set    -- "arrows" or "morphisms"
+    _~>_ : Obj → Obj → Set    -- "arrows" or "morphisms"
 
     -- two operations
-    id~>        : {T : Obj} ->      T ~> T
-    _>~>_       : {R S T : Obj} ->  R ~> S  ->  S ~> T  ->  R ~> T
+    id~>        : {T : Obj} →      T ~> T
+    _>~>_       : {R S T : Obj} →  R ~> S  →  S ~> T  →  R ~> T
 
     -- Composition left unit law
-    law-id~>>~> : {S T : Obj}     (f : S ~> T) -> id~> >~> f ≡ f
+    law-id~>>~> : {S T : Obj}     (f : S ~> T) → id~> >~> f ≡ f
     -- Composition right unit law
-    law->~>id~> : {S T : Obj}     (f : S ~> T) -> f >~> id~> ≡ f
+    law->~>id~> : {S T : Obj}     (f : S ~> T) → f >~> id~> ≡ f
     -- Composition associative law
-    law->~>>~>  : {Q R S T : Obj} (f : Q ~> R)(g : R ~> S)(h : S ~> T) -> (f >~> g) >~> h ≡ f >~> (g >~> h)
+    law->~>>~>  : {Q R S T : Obj} (f : Q ~> R)(g : R ~> S)(h : S ~> T) → (f >~> g) >~> h ≡ f >~> (g >~> h)
 
 
   -- The so-called whiskering
-  whiskerl : {A B C : Obj} {g1 g2 : B ~> C} {f : A ~> B}  -> g1 ≡ g2 -> f >~> g1 ≡ f >~> g2
+  whiskerl : {A B C : Obj} {g1 g2 : B ~> C} {f : A ~> B}  → g1 ≡ g2 → f >~> g1 ≡ f >~> g2
   whiskerl {f = f} refl = refl
 
-  whiskerr : {B C D : Obj} {g1 g2 : B ~> C} {h : C ~> D}  -> g1 ≡ g2 -> g1 >~> h ≡ g2 >~> h
+  whiskerr : {B C D : Obj} {g1 g2 : B ~> C} {h : C ~> D}  → g1 ≡ g2 → g1 >~> h ≡ g2 >~> h
   whiskerr {h = h} refl = refl
 
 
@@ -49,18 +49,18 @@ EMPTY = record
 ONE : Category
 ONE = record
         { Obj = One
-        ; _~>_ = λ _ _ -> One
+        ; _~>_ = λ _ _ → One
         ; id~> = <>
         ; _>~>_ = λ _ _ → <>
         ; law-id~>>~> = idOne
         ; law->~>id~> = idOne
         ; law->~>>~> = λ _ _ _ → refl
         } where
-        idOne : (f : One) -> f ≡ <>
+        idOne : (f : One) → f ≡ <>
         idOne <> = refl
 
 
-unique->= : (m n : Nat) (p q : m >= n) -> p ≡ q
+unique->= : (m n : Nat) (p q : m >= n) → p ≡ q
 unique->= m zero <> <> = refl
 unique->= zero (suc n) p ()
 unique->= (suc m) (suc n) p q = unique->= m n p q
@@ -91,7 +91,7 @@ open Monoid {{...}} public
 
 
 -- Monoid is a category
-MONOID : {X : Set} {{m : Monoid X}} -> Category
+MONOID : {X : Set} {{m : Monoid X}} → Category
 MONOID  {X} = record
            { Obj = One
            ; _~>_ = λ _ _ → X
@@ -107,7 +107,7 @@ MONOID  {X} = record
 SET : Category
 SET = record
         { Obj = Set
-        ; _~>_ = \S T -> S -> T
+        ; _~>_ = λ S T → S → T
         ; id~> = id
         ; _>~>_ = _>>_
         ; law-id~>>~> = λ _ → refl
@@ -175,8 +175,8 @@ module FUNCTOR where
       𝔽₁ : {S T : Obj C} → _~>_ C S T → _~>_ D (𝔽₀ S) (𝔽₀ T)
 
       -- Two laws
-      F-map-id~> : {T : Obj C} -> 𝔽₁ (id~> C {T}) ≡ id~> D {𝔽₀ T}
-      F-map->~> : {R S T : Obj C} (f : _~>_ C R S) (g : _~>_ C S T) ->
+      F-map-id~> : {T : Obj C} → 𝔽₁ (id~> C {T}) ≡ id~> D {𝔽₀ T}
+      F-map->~> : {R S T : Obj C} (f : _~>_ C R S) (g : _~>_ C S T) →
                   𝔽₁ (_>~>_ C f g) ≡ _>~>_ D (𝔽₁ f) (𝔽₁ g)
 
 open FUNCTOR public
@@ -220,7 +220,7 @@ Functor≡ {C} {D}
   = Sg (𝔽₀ ≡ 𝔾₀)
        λ { refl  → -- Patterns lambdas
          Sg (_≡_ {∀ {S T : Category.Obj C} → (C Category.~> S) T → (D Category.~> 𝔽₀ S) (𝔾₀ T)} 𝔽₁ 𝔾₁)
-            λ { refl ->
+            λ { refl →
                 _≡_ {forall {T : Category.Obj C} → 𝔽₁ (Category.id~> C {T}) ≡ Category.id~> D} F-map-id~> G-map-id~>
                 *
                 _≡_ {forall {R S T : Category.Obj C} (f : (C Category.~> R) S) (g : (C Category.~> S) T) →
