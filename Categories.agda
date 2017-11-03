@@ -153,8 +153,8 @@ CAT-MONOID  = record
                            _ : Monoid T
                            _ = s
                      in
-                     f >> g , record { respε = g (f ε) ≡⟨ cong g (MonoidHom.respε fm) ⟩
-                                               g ε  ≡⟨ MonoidHom.respε gm ⟩
+                     f >> g , record { respε = g (f ε)    ≡⟨ cong g (MonoidHom.respε fm) ⟩
+                                               g ε        ≡⟨ MonoidHom.respε gm ⟩
                                                ε
                                                □
                                      ; resp⋆ = λ a b → g (f (a ⋆ b))     ≡⟨ cong g (MonoidHom.resp⋆ fm a b) ⟩
@@ -228,7 +228,7 @@ Functor≡ {C} {D}
                      F-map->~>  G-map->~>
               }}
 
-
+-- Functor equivalence implies propositional equivalence
 Functor≡→≡ : {C D : Category}{F G : C => D} → Functor≡ F G → F ≡ G
 Functor≡→≡ (refl , (refl , (refl , refl)))  = refl
 
