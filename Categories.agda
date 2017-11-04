@@ -60,27 +60,30 @@ ONE = record
         idOne <> = refl
 
 
-unique->= : (m n : Nat) (p q : m >= n) → p ≡ q
-unique->= m zero <> <> = refl
-unique->= zero (suc n) p ()
-unique->= (suc m) (suc n) p q = unique->= m n p q
+record Preorder (X : Set) : Set where
+  infixl 5 _≤_
+  field
+    _≤_ : X → X → Set
+    ≤-refl : (x : X) → x ≤ x
+    ≤-trans : {x y z : X} → x ≤ y → y ≤ z → x ≤ z
+    ≤-unique : {x y : X} → (p q : x ≤ y) → p ≡ q
+open Preorder {{...}} public
+
+-- Preorder is a category
+PREORDER : {X : Set} {{m : Preorder X}} → Category
+PREORDER {X} {{m}} = record
+             { Obj = X
+             ; _~>_ = _≤_
+             ; id~> = λ {x} → ≤-refl x
+             ; _>~>_ = λ f g → ≤-trans {{m}} f g
+             ; law-id~>>~> = λ f → ≤-unique {{m}} _ _
+             ; law->~>id~> = λ f → ≤-unique  {{m}} _ _
+             ; law->~>>~> = λ f g h → ≤-unique {{m}} _ _
+             }
 
 
--- Preorder is a category (should probably generalize to any preorder)
-PREORDER-ℕ->= : Category
-PREORDER-ℕ->= = record
-                  { Obj = Nat
-                  ; _~>_ = _>=_
-                  ; id~> = λ {n} → refl->= n
-                  ; _>~>_ = λ {m n p} f g → trans->= m n p f g
-                  ; law-id~>>~> = λ {n m} f → unique->= n m _ _
-                  ; law->~>id~> = λ {n m} f → unique->= n m _ _
-                  ; law->~>>~> = λ {n m s t} f g h → unique->= n t _ _
-                  }
-
-
-record Monoid (X : Set): Set where
-  infixr 5 _⋆_
+record Monoid (X : Set) : Set where
+  infixl 5 _⋆_
   field
     ε : X
     _⋆_ : X → X → X
@@ -115,6 +118,42 @@ SET = record
         ; law->~>>~> = λ _ _ _ → refl
         }
 
+-- Monotone
+record Monotone {X} {{MX : Preorder X}} {Y} {{MY : Preorder Y}} (f : X  → Y) : Set where
+  field
+    resp≤ : ∀ {x x'} → x ≤ x' → f x ≤ f x'
+
+
+SomePreorder : Set
+SomePreorder = Sg Set Preorder
+
+-- The category of preorders
+Cat-Preorder : Category
+Cat-Preorder = record
+             { Obj = SomePreorder
+             ; _~>_ = λ m n → Prf (fst m → fst n) λ f → Monotone {{snd m}} {{snd n}} f
+             ; id~> = id , record { resp≤ = id }
+             ; _>~>_ = mcom
+             ; law-id~>>~> = λ _ → refl
+             ; law->~>id~> = λ _ → refl
+             ; law->~>>~> = λ _ _ _ → refl
+             } where
+             mcom : {R S T : Sg Set Preorder} →
+                    Prf (fst R → fst S) (λ f → Monotone {{snd R}} {{snd S}} f) →
+                    Prf (fst S → fst T) (λ f → Monotone {{snd S}} {{snd T}} f) →
+                    Prf (fst R → fst T) (λ f → Monotone {{snd R}} {{snd T}} f)
+             mcom {R , m} {S , n} {T , s} (f , fm) (g , gm)
+                   = let instance
+                           -- Bring instances into scope
+                           _ : Preorder S
+                           _ = n
+                           _ : Preorder R
+                           _ = m
+                           _ : Preorder T
+                           _ = s
+                     in f >> g , record { resp≤ = λ {x y} x≤y → Monotone.resp≤ gm (Monotone.resp≤ fm x≤y) }
+
+
 -- Monoid homomorphism
 record MonoidHom {X} {{MX : Monoid X}} {Y} {{MY : Monoid Y}} (f : X  → Y) : Set where
   field
@@ -130,15 +169,12 @@ CAT-MONOID : Category
 CAT-MONOID  = record
                { Obj = SomeMonoid
                ; _~>_ = λ m n → Prf (fst m → fst n) λ f → MonoidHom {{snd m}} {{snd n}} f
-               ; id~> = mid
+               ; id~> = id , record { respε = refl ; resp⋆ = λ _ _ → refl }
                ; _>~>_ = mcom
                ; law-id~>>~> = λ _ → refl
                ; law->~>id~> = λ _ → refl
                ; law->~>>~> = λ _ _ _ → refl
                } where
-                 mid : {T : SomeMonoid} → Prf (fst T → fst T) (λ f → MonoidHom {{snd T}} {{snd T}} f)
-                 mid {X , m} = id , record { respε = refl ; resp⋆ = λ _ _ → refl }
-
                  mcom : {R S T : SomeMonoid} →
                         Prf (fst R → fst S) (λ f → MonoidHom {{snd R}} {{snd S}} f) →
                         Prf (fst S → fst T) (λ f → MonoidHom {{snd S}} {{snd T}} f) →
@@ -226,7 +262,8 @@ Functor≡ {C} {D}
                 _≡_ {forall {R S T : Category.Obj C} (f : (C Category.~> R) S) (g : (C Category.~> S) T) →
                      𝔽₁ ((C Category.>~> f) g) ≡ (D Category.>~> 𝔽₁ f) (𝔽₁ g)}
                      F-map->~>  G-map->~>
-              }}
+              }
+         }
 
 -- Functor equivalence implies propositional equivalence
 Functor≡→≡ : {C D : Category}{F G : C => D} → Functor≡ F G → F ≡ G
