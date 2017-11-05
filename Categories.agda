@@ -13,7 +13,7 @@ record Category : Set where
 
     -- two operations
     id~>        : {T : Obj} →      T ~> T
-    _>~>_       : {R S T : Obj} →  R ~> S  →  S ~> T  →  R ~> T
+    _>~>_       : {R S T : Obj} →  R ~> S → S ~> T → R ~> T
 
     -- Composition left unit law
     law-id~>>~> : {S T : Obj}     (f : S ~> T) → id~> >~> f ≡ f
@@ -92,18 +92,25 @@ record Monoid (X : Set) : Set where
     assoc   : (x y z : X) → (x ⋆ y) ⋆ z ≡ x ⋆ (y ⋆ z)
 open Monoid {{...}} public
 
+SomeMonoid : Set
+SomeMonoid = Sg Set Monoid
+
 
 -- Monoid is a category
-MONOID : {X : Set} {{m : Monoid X}} → Category
-MONOID  {X} = record
-           { Obj = One
-           ; _~>_ = λ _ _ → X
-           ; id~> = ε
-           ; _>~>_ = λ a b → a ⋆ b
-           ; law-id~>>~> = λ f → absorbL f
-           ; law->~>id~> = λ f → absorbR f
-           ; law->~>>~> = λ f g h → assoc f g h
-           }
+MONOID : SomeMonoid → Category
+MONOID (X , m)
+  = let instance
+          _ : Monoid X
+          _ = m
+    in record
+       { Obj = One
+       ; _~>_ = λ _ _ → X
+       ; id~> = ε
+       ; _>~>_ = _⋆_
+       ; law-id~>>~> = absorbL
+       ; law->~>id~> = absorbR
+       ; law->~>>~> = assoc
+       }
 
 
 -- The category of sets
@@ -159,10 +166,6 @@ record MonoidHom {X} {{MX : Monoid X}} {Y} {{MY : Monoid Y}} (f : X  → Y) : Se
   field
     respε : f ε ≡ ε
     resp⋆ : ∀ x x' → f (x ⋆ x') ≡ f x ⋆ f x'
-
-SomeMonoid : Set
-SomeMonoid = Sg Set Monoid
-
 
 -- The category of monoids
 CAT-MONOID : Category
@@ -298,3 +301,15 @@ CATEGORY = record
                        extensionality' λ z →
                          extensionality λ g → extensionality λ h → eqUnique _ _)
              } where open _=>_
+
+
+-- A forgetful functor
+U : {m : SomeMonoid} → MONOID m => SET
+U {X , mon} =
+  let instance
+        _ : Monoid X
+        _ = mon
+  in record { 𝔽₀ = λ _ → X ; 𝔽₁ = λ x y → y ⋆ x -- note the order
+            ; F-map-id~> = extensionality absorbR
+            ; F-map->~> = λ x y → extensionality λ z → sym (assoc z x y)
+            }
