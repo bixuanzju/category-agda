@@ -10,7 +10,7 @@ open import Prelude
 ----------------------------------------------------------------------------
 
 record Category : Set where
-  infixr 3 _>~>_
+  infixl 3 _>~>_
   field
     -- two types of thing
     Obj  : Set                  -- "objects"
@@ -21,19 +21,19 @@ record Category : Set where
     _>~>_       : {R S T : Obj} →  R ~> S → S ~> T → R ~> T
 
     -- Composition left unit law
-    law-id~>>~> : {S T : Obj}     (f : S ~> T) → id~> >~> f ≡ f
+    law-id~>ˡ : {S T : Obj}     (f : S ~> T) → id~> >~> f ≡ f
     -- Composition right unit law
-    law->~>id~> : {S T : Obj}     (f : S ~> T) → f >~> id~> ≡ f
+    law-id~>ʳ : {S T : Obj}     (f : S ~> T) → f >~> id~> ≡ f
     -- Composition associative law
-    law->~>>~>  : {Q R S T : Obj} (f : Q ~> R)(g : R ~> S)(h : S ~> T) → (f >~> g) >~> h ≡ f >~> (g >~> h)
+    law->~>  : {Q R S T : Obj} (f : Q ~> R)(g : R ~> S)(h : S ~> T) → (f >~> g) >~> h ≡ f >~> (g >~> h)
 
 
   -- The so-called whiskering
-  whiskerl : {A B C : Obj} {g1 g2 : B ~> C} {f : A ~> B}  → g1 ≡ g2 → f >~> g1 ≡ f >~> g2
-  whiskerl {f = f} refl = refl
+  whiskerˡ : {A B C : Obj} {g1 g2 : B ~> C} {f : A ~> B}  → g1 ≡ g2 → f >~> g1 ≡ f >~> g2
+  whiskerˡ {f = f} refl = refl
 
-  whiskerr : {B C D : Obj} {g1 g2 : B ~> C} {h : C ~> D}  → g1 ≡ g2 → g1 >~> h ≡ g2 >~> h
-  whiskerr {h = h} refl = refl
+  whiskerʳ : {B C D : Obj} {g1 g2 : B ~> C} {h : C ~> D}  → g1 ≡ g2 → g1 >~> h ≡ g2 >~> h
+  whiskerʳ {h = h} refl = refl
 
 
 ----------------------------------------------------------------------------
@@ -47,9 +47,9 @@ EMPTY = record
           ; _~>_ = λ _ _ → Zero
           ; id~> = λ {T} → T
           ; _>~>_ = λ x _ → magic x
-          ; law-id~>>~> = λ f → magic f
-          ; law->~>id~> = λ f → magic f
-          ; law->~>>~> = λ f g h → magic f
+          ; law-id~>ˡ = λ f → magic f
+          ; law-id~>ʳ = λ f → magic f
+          ; law->~> = λ f g h → magic f
           }
 
 
@@ -60,12 +60,10 @@ ONE = record
         ; _~>_ = λ _ _ → One
         ; id~> = <>
         ; _>~>_ = λ _ _ → <>
-        ; law-id~>>~> = idOne
-        ; law->~>id~> = idOne
-        ; law->~>>~> = λ _ _ _ → refl
-        } where
-        idOne : (f : One) → f ≡ <>
-        idOne <> = refl
+        ; law-id~>ˡ = λ { <> → refl }
+        ; law-id~>ʳ = λ { <> → refl }
+        ; law->~> = λ _ _ _ → refl
+        }
 
 
 record Preorder (X : Set) : Set where
@@ -79,7 +77,7 @@ open Preorder {{...}} public
 
 
 SomePreorder : Set
-SomePreorder = Sg Set Preorder
+SomePreorder = Σ Set Preorder
 
 -- Preorder is a category
 PREORDER : SomePreorder → Category
@@ -92,9 +90,9 @@ PREORDER (X , m) =
              ; _~>_ = _≤_
              ; id~> = λ {x} → ≤-refl x
              ; _>~>_ = λ f g → ≤-trans {{m}} f g
-             ; law-id~>>~> = λ f → ≤-unique {{m}} _ _
-             ; law->~>id~> = λ f → ≤-unique  {{m}} _ _
-             ; law->~>>~> = λ f g h → ≤-unique {{m}} _ _
+             ; law-id~>ˡ = λ f → ≤-unique {{m}} _ _
+             ; law-id~>ʳ = λ f → ≤-unique  {{m}} _ _
+             ; law->~> = λ f g h → ≤-unique {{m}} _ _
              }
 
 
@@ -109,7 +107,7 @@ record Monoid (X : Set) : Set where
 open Monoid {{...}} public
 
 SomeMonoid : Set
-SomeMonoid = Sg Set Monoid
+SomeMonoid = Σ Set Monoid
 
 
 -- Monoid is a category
@@ -123,9 +121,9 @@ MONOID (X , m)
        ; _~>_ = λ _ _ → X
        ; id~> = ε
        ; _>~>_ = _⋆_
-       ; law-id~>>~> = absorbL
-       ; law->~>id~> = absorbR
-       ; law->~>>~> = assoc
+       ; law-id~>ˡ = absorbL
+       ; law-id~>ʳ = absorbR
+       ; law->~> = assoc
        }
 
 
@@ -140,9 +138,9 @@ SET = record
         ; _~>_ = λ S T → S → T
         ; id~> = id
         ; _>~>_ = _>>_
-        ; law-id~>>~> = λ _ → refl
-        ; law->~>id~> = λ _ → refl
-        ; law->~>>~> = λ _ _ _ → refl
+        ; law-id~>ˡ = λ _ → refl
+        ; law-id~>ʳ = λ _ → refl
+        ; law->~> = λ _ _ _ → refl
         }
 
 -- Monotone
@@ -156,18 +154,18 @@ record Monotone {X} {{MX : Preorder X}} {Y} {{MY : Preorder Y}} (f : X  → Y) :
 Cat-Preorder : Category
 Cat-Preorder = record
              { Obj = SomePreorder
-             ; _~>_ = λ m n → Prf (fst m → fst n) λ f → Monotone {{snd m}} {{snd n}} f
-             ; id~> = id , record { resp≤ = id }
+             ; _~>_ = λ m n → Subset (fst m → fst n) λ f → Monotone {{snd m}} {{snd n}} f
+             ; id~> = id # record { resp≤ = id }
              ; _>~>_ = mcom
-             ; law-id~>>~> = λ _ → refl
-             ; law->~>id~> = λ _ → refl
-             ; law->~>>~> = λ _ _ _ → refl
+             ; law-id~>ˡ = λ _ → refl
+             ; law-id~>ʳ = λ _ → refl
+             ; law->~> = λ _ _ _ → refl
              } where
-             mcom : {R S T : Sg Set Preorder} →
-                    Prf (fst R → fst S) (λ f → Monotone {{snd R}} {{snd S}} f) →
-                    Prf (fst S → fst T) (λ f → Monotone {{snd S}} {{snd T}} f) →
-                    Prf (fst R → fst T) (λ f → Monotone {{snd R}} {{snd T}} f)
-             mcom {R , m} {S , n} {T , s} (f , fm) (g , gm)
+             mcom : {R S T : Σ Set Preorder} →
+                    Subset (fst R → fst S) (λ f → Monotone {{snd R}} {{snd S}} f) →
+                    Subset (fst S → fst T) (λ f → Monotone {{snd S}} {{snd T}} f) →
+                    Subset (fst R → fst T) (λ f → Monotone {{snd R}} {{snd T}} f)
+             mcom {R , m} {S , n} {T , s} (f # fm) (g # gm)
                    = let instance
                            -- Bring instances into scope
                            _ : Preorder S
@@ -176,7 +174,7 @@ Cat-Preorder = record
                            _ = m
                            _ : Preorder T
                            _ = s
-                     in f >> g , record { resp≤ = λ {x y} x≤y → Monotone.resp≤ gm (Monotone.resp≤ fm x≤y) }
+                     in f >> g # record { resp≤ = λ x≤y → Monotone.resp≤ gm (Monotone.resp≤ fm x≤y) }
 
 
 -- Monoid homomorphism
@@ -189,18 +187,18 @@ record MonoidHom {X} {{MX : Monoid X}} {Y} {{MY : Monoid Y}} (f : X  → Y) : Se
 CAT-MONOID : Category
 CAT-MONOID  = record
                { Obj = SomeMonoid
-               ; _~>_ = λ m n → Prf (fst m → fst n) λ f → MonoidHom {{snd m}} {{snd n}} f
-               ; id~> = id , record { respε = refl ; resp⋆ = λ _ _ → refl }
+               ; _~>_ = λ m n → Subset (fst m → fst n) λ f → MonoidHom {{snd m}} {{snd n}} f
+               ; id~> = id # record { respε = refl ; resp⋆ = λ _ _ → refl }
                ; _>~>_ = mcom
-               ; law-id~>>~> = λ _ → refl
-               ; law->~>id~> = λ _ → refl
-               ; law->~>>~> = λ _ _ _ → refl
+               ; law-id~>ˡ = λ _ → refl
+               ; law-id~>ʳ = λ _ → refl
+               ; law->~> = λ _ _ _ → refl
                } where
                  mcom : {R S T : SomeMonoid} →
-                        Prf (fst R → fst S) (λ f → MonoidHom {{snd R}} {{snd S}} f) →
-                        Prf (fst S → fst T) (λ f → MonoidHom {{snd S}} {{snd T}} f) →
-                        Prf (fst R → fst T) (λ f → MonoidHom {{snd R}} {{snd T}} f)
-                 mcom {R , m} {S , n} {T , s} (f , fm) (g , gm)
+                        Subset (fst R → fst S) (λ f → MonoidHom {{snd R}} {{snd S}} f) →
+                        Subset (fst S → fst T) (λ f → MonoidHom {{snd S}} {{snd T}} f) →
+                        Subset (fst R → fst T) (λ f → MonoidHom {{snd R}} {{snd T}} f)
+                 mcom {R , m} {S , n} {T , s} (f # fm) (g # gm)
                    = let instance
                            -- Bring instances into scope
                            _ : Monoid S
@@ -210,7 +208,7 @@ CAT-MONOID  = record
                            _ : Monoid T
                            _ = s
                      in
-                     f >> g , record { respε = g (f ε)    ≡⟨ cong g (MonoidHom.respε fm) ⟩
+                     f >> g # record { respε = g (f ε)    ≡⟨ cong g (MonoidHom.respε fm) ⟩
                                                g ε        ≡⟨ MonoidHom.respε gm ⟩
                                                ε
                                                □
@@ -277,12 +275,12 @@ Functor≡ : {C D : Category} (F G : C => D) → Set
 Functor≡ {C} {D}
   record { 𝔽₀ = 𝔽₀ ; 𝔽₁ = 𝔽₁ ; F-map-id~> = F-map-id~> ; F-map->~> = F-map->~> }
   record { 𝔽₀ = 𝔾₀ ; 𝔽₁ = 𝔾₁ ; F-map-id~> = G-map-id~> ; F-map->~> = G-map->~> }
-  = Sg (𝔽₀ ≡ 𝔾₀)
+  = Σ (𝔽₀ ≡ 𝔾₀)
        λ { refl  → -- Patterns lambdas
-         Sg (_≡_ {∀ {S T : Category.Obj C} → (C Category.~> S) T → (D Category.~> 𝔽₀ S) (𝔾₀ T)} 𝔽₁ 𝔾₁)
+         Σ (_≡_ {∀ {S T : Category.Obj C} → (C Category.~> S) T → (D Category.~> 𝔽₀ S) (𝔾₀ T)} 𝔽₁ 𝔾₁)
             λ { refl →
                 _≡_ {forall {T : Category.Obj C} → 𝔽₁ (Category.id~> C {T}) ≡ Category.id~> D} F-map-id~> G-map-id~>
-                *
+                ×
                 _≡_ {forall {R S T : Category.Obj C} (f : (C Category.~> R) S) (g : (C Category.~> S) T) →
                      𝔽₁ ((C Category.>~> f) g) ≡ (D Category.>~> 𝔽₁ f) (𝔽₁ g)}
                      F-map->~>  G-map->~>
@@ -301,20 +299,20 @@ CATEGORY = record
              ; _~>_ =  _=>_
              ; id~> = Functor-id
              ; _>~>_ = _>=>_
-             ; law-id~>>~> =
+             ; law-id~>ˡ =
                λ F → Functor≡→≡ (refl , refl ,
                  extensionality' (λ x → eqUnique _ _) ,
                  extensionality' λ x →
                    extensionality' λ y →
                      extensionality' λ z →
                        extensionality λ g → extensionality λ h → eqUnique _ _)
-             ; law->~>id~> =
+             ; law-id~>ʳ =
                λ F → Functor≡→≡ (refl , refl ,
                  extensionality' (λ x → eqUnique _ _) ,
                    extensionality' λ x →
                      extensionality' λ y →
                        extensionality' λ z → extensionality λ g → extensionality λ h → eqUnique _ _)
-             ; law->~>>~> =
+             ; law->~> =
                λ F G H → Functor≡→≡ (refl , refl ,
                  extensionality' (λ x → eqUnique _ _) ,
                    extensionality' λ x →
@@ -337,17 +335,95 @@ U {X , mon} =
 
 
 -- A representable functor
-module Rep where
-  open Category
+module Rep (C : Category) where
+  open Category C
 
-  ℂₓ : {C : Category} → (X : Obj C) → C => SET
-  ℂₓ {C} X = record { 𝔽₀ = λ A → _~>_ C X A  ; 𝔽₁ = λ f g → _>~>_ C g f
-                    ; F-map-id~> = extensionality λ x → law->~>id~> C _
-                    ; F-map->~> = λ f g → extensionality λ x → sym (law->~>>~> C x f g)
-                    }
-open Rep public
+  ℂₓ : (X : Obj) → C => SET
+  ℂₓ X = record { 𝔽₀ = λ A → X ~> A  ; 𝔽₁ = λ f g → g >~> f
+                ; F-map-id~> = extensionality λ x → law-id~>ʳ _
+                ; F-map->~> = λ f g → extensionality λ x → sym (law->~> x f g)
+                }
 
 
 ----------------------------------------------------------------------------
 -- New categories from old
 ----------------------------------------------------------------------------
+
+-- Opposite categories
+_op : Category → Category
+C op = record
+         { Obj = Obj
+         ; _~>_ = λ x y → y ~> x
+         ; id~> = id~>
+         ; _>~>_ = λ f g → g >~> f
+         ; law-id~>ˡ = λ f → law-id~>ʳ f
+         ; law-id~>ʳ = λ f → law-id~>ˡ f
+         ; law->~> = λ f g h → sym (law->~> h g f)
+         } where open Category C
+
+
+-- Arrow categories
+module ArrowCat (C : Category) where
+  open Category C
+
+  record ArrowObj : Set where
+    constructor arrobj
+    field
+      {A} : Obj
+      {B} : Obj
+      arr : A ~> B
+
+  record Arrow~> (X Y : ArrowObj) : Set where
+    constructor arrarr
+    module X = ArrowObj X
+    module Y = ArrowObj Y
+    f : X.A ~> X.B
+    f = X.arr
+    g : Y.A ~> Y.B
+    g = Y.arr
+    field
+      i : X.A ~> Y.A
+      j : X.B ~> Y.B
+      .commuteSquare : i >~> g ≡ f >~> j
+
+
+  Arrow~>-≡ : ∀ {X Y} → {f g : Arrow~> X Y} → Arrow~>.i f ≡ Arrow~>.i g → Arrow~>.j f ≡ Arrow~>.j g → f ≡ g
+  Arrow~>-≡ {f = arrarr _ _ _} {arrarr _ _ _} eq1 eq2 rewrite eq1 | eq2 = refl
+
+  arrow : Category
+  arrow = record
+            { Obj = ArrowObj
+            ; _~>_ = Arrow~>
+            ; id~> = aid
+            ; _>~>_ = acom
+            ; law-id~>ˡ = λ f → Arrow~>-≡ (law-id~>ˡ _) (law-id~>ˡ _)
+            ; law-id~>ʳ = λ f → Arrow~>-≡ (law-id~>ʳ _) (law-id~>ʳ _)
+            ; law->~> = λ f g h → Arrow~>-≡ (law->~> _ _ _) (law->~> _ _ _)
+            } where
+            aid : {T : ArrowObj} → Arrow~> T T
+            aid {arrobj {A} {B} f} = arrarr (id~> {A}) (id~> {B})
+                                            ( id~> >~> f            ≡⟨ law-id~>ˡ _ ⟩
+                                              f                      ⟨ law-id~>ʳ _ ⟩≡
+                                              f >~> id~>
+                                              □
+                                            )
+
+            acom : {f g h : ArrowObj} → Arrow~> f g → Arrow~> g h → Arrow~> f h
+            acom {arrobj {A} {B} f} {arrobj {C} {D} g} {arrobj {E} {F} h} ij kl =
+              let i : A ~> C
+                  i = Arrow~>.i ij
+                  j : B ~> D
+                  j = Arrow~>.j ij
+                  k : C ~> E
+                  k = Arrow~>.i kl
+                  l : D ~> F
+                  l = Arrow~>.j kl
+              in arrarr (i >~> k) (j >~> l)
+                        ( i >~> k >~> h                ≡⟨ law->~> i k h ⟩
+                          i >~> (k >~> h)              ≡⟨ whiskerˡ {f = i} (Arrow~>.commuteSquare kl) ⟩
+                          i >~> (g >~> l)               ⟨ law->~> i g l ⟩≡
+                          i >~> g >~> l                ≡⟨ whiskerʳ {h = l} (Arrow~>.commuteSquare ij) ⟩
+                          f >~> j >~> l                ≡⟨ law->~> f j l ⟩
+                          f >~> (j >~> l)
+                          □
+                        )

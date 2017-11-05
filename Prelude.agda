@@ -48,27 +48,31 @@ data _+_ (S : Set)(T : Set) : Set where -- "where" wants an indented block
   inr : T → S + T
   -- in Haskell, this was called "Either S T"
 
-record Sg (S : Set)(T : S → Set) : Set where  -- Sg is short for "Sigma"
-  constructor _,_
-  field -- introduces a bunch of fields, listed with their types
-    fst : S
-    snd : T fst
-open Sg public
-
-
--- A variant of Sigma type with the second field annotated as irrelevant
-record Prf (S : Set)(T : (S → Set)) : Set where
+record Σ (S : Set)(T : S -> Set) : Set where
   constructor _,_
   field
-    elem : S
-    .prf : (T elem)
-open Prf public
+    fst : S
+    snd : T fst
+open Σ public
+
+infix 2 Σ-syntax
+
+Σ-syntax : ∀ (A : Set) → (A → Set) → Set
+Σ-syntax = Σ
+
+syntax Σ-syntax A (λ x → B) = Σ[ x ∈ A ] B
 
 
-_*_ : Set → Set → Set
-S * T = Sg S λ _ → T
+record Subset (A : Set) (P : A → Set) : Set where
+  constructor _#_
+  field
+    elem   : A
+    .proof : P elem
 
-infixr 4 _,_ _*_
+_×_ : Set -> Set -> Set
+S × T = Σ S \ _ -> T
+
+infixr 4 _,_ _×_ _#_
 
 magic : Zero → {A : Set} → A
 magic ()
@@ -177,7 +181,7 @@ caseTwo t f tt = t
 caseTwo t f ff = f
 
 _⊹_ : Set → Set → Set
-S ⊹ T = Sg Two (caseTwo S T)
+S ⊹ T = Σ Two (caseTwo S T)
 
 Dec : Set → Set
 Dec X = X ⊹ (X → Zero)
