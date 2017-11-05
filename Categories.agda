@@ -313,3 +313,14 @@ U {X , mon} =
             ; F-map-id~> = extensionality absorbR
             ; F-map->~> = λ x y → extensionality λ z → sym (assoc z x y)
             }
+
+
+-- A representable functor
+module Rep where
+  open Category
+
+  ℂₓ : {C : Category} → (X : Obj C) → C => SET
+  ℂₓ {C} X = record { 𝔽₀ = λ A → _~>_ C X A  ; 𝔽₁ = λ f g → _>~>_ C g f
+                    ; F-map-id~> = extensionality λ x → law->~>id~> C _
+                    ; F-map->~> = λ f g → extensionality λ x → sym (law->~>>~> C x f g)
+                    }
