@@ -4,12 +4,17 @@ module Categories where
 
 open import Prelude
 
+
+----------------------------------------------------------------------------
+-- Definition of a category
+----------------------------------------------------------------------------
+
 record Category : Set where
   infixr 3 _>~>_
   field
     -- two types of thing
     Obj  : Set                  -- "objects"
-    _~>_ : Obj → Obj → Set    -- "arrows" or "morphisms"
+    _~>_ : Obj → Obj → Set      -- "arrows" or "morphisms"
 
     -- two operations
     id~>        : {T : Obj} →      T ~> T
@@ -31,6 +36,9 @@ record Category : Set where
   whiskerr {h = h} refl = refl
 
 
+----------------------------------------------------------------------------
+-- Structured sets as categories
+----------------------------------------------------------------------------
 
 -- Empty category
 EMPTY : Category
@@ -69,9 +77,17 @@ record Preorder (X : Set) : Set where
     ≤-unique : {x y : X} → (p q : x ≤ y) → p ≡ q
 open Preorder {{...}} public
 
+
+SomePreorder : Set
+SomePreorder = Sg Set Preorder
+
 -- Preorder is a category
-PREORDER : {X : Set} {{m : Preorder X}} → Category
-PREORDER {X} {{m}} = record
+PREORDER : SomePreorder → Category
+PREORDER (X , m) =
+  let instance
+        _ : Preorder X
+        _ = m
+  in  record
              { Obj = X
              ; _~>_ = _≤_
              ; id~> = λ {x} → ≤-refl x
@@ -113,6 +129,10 @@ MONOID (X , m)
        }
 
 
+----------------------------------------------------------------------------
+-- Categories of structured sets
+----------------------------------------------------------------------------
+
 -- The category of sets
 SET : Category
 SET = record
@@ -131,8 +151,6 @@ record Monotone {X} {{MX : Preorder X}} {Y} {{MY : Preorder Y}} (f : X  → Y) :
     resp≤ : ∀ {x x'} → x ≤ x' → f x ≤ f x'
 
 
-SomePreorder : Set
-SomePreorder = Sg Set Preorder
 
 -- The category of preorders
 Cat-Preorder : Category
@@ -203,6 +221,9 @@ CAT-MONOID  = record
                                      }
 
 
+----------------------------------------------------------------------------
+-- Categories of categories
+----------------------------------------------------------------------------
 
 module FUNCTOR where
   open Category
@@ -324,3 +345,9 @@ module Rep where
                     ; F-map-id~> = extensionality λ x → law->~>id~> C _
                     ; F-map->~> = λ f g → extensionality λ x → sym (law->~>>~> C x f g)
                     }
+open Rep public
+
+
+----------------------------------------------------------------------------
+-- New categories from old
+----------------------------------------------------------------------------
