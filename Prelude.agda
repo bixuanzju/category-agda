@@ -195,10 +195,7 @@ data List (X : Set) : Set where
   []   : List X
   _,-_ : (x : X)(xs : List X) → List X
 infixr 4 _,-_
-{-# COMPILE GHC List = data [] ([] | (:)) #-}
 {-# BUILTIN LIST List #-}
-{-# BUILTIN NIL [] #-}
-{-# BUILTIN CONS _,-_ #-}
 
 
 ----------------------------------------------------------------------------

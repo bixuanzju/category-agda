@@ -1,4 +1,4 @@
-Being my Agda exercise of learning category theory.
+Being my Agda (version 2.5.4) exercise of learning category theory.
 
 I follow the excellent
 [notes](http://emorehouse.web.wesleyan.edu/research/notes/basic_category_theory.pdf)
