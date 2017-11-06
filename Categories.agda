@@ -495,7 +495,7 @@ module Post-Composition-Functor {C : Category} {A B : Category.Obj C} (f : Categ
 -- Monic and epic morphisms
 ----------------------------------------------------------------------------
 
-module MONIC-EPIC {C : Category} where
+module Monic-Epic {C : Category} where
   open Category C
 
   Monic : {A B : Obj} (↣ : A ~> B) → Set
@@ -554,3 +554,83 @@ module MONIC-EPIC {C : Category} where
                  m >~> (n >~> g) ⟨ law->~> _ _ _ ⟩≡
                  m >~> n >~> g
                  □
+
+
+
+----------------------------------------------------------------------------
+-- Split monic and epic morphisms
+----------------------------------------------------------------------------
+
+
+module Split-Monic-Epic {C : Category} where
+  open Category C
+  open Monic-Epic {C}
+
+  record Split-Monic {A B : Obj} (s : A ~> B) : Set where
+    field
+      r : B ~> A
+      post-invert : s >~> r ≡ id~>
+
+  record Split-Epic {A B : Obj} (r : A ~> B) : Set where
+    field
+      s : B ~> A
+      pre-invert : s >~> r ≡ id~>
+
+  split-monic : {A B : Obj} {s : A ~> B} → Split-Monic s → Monic s
+  split-monic {A} {B} {s} m {f = f} {g = g} post =
+      f                         ⟨ law-id~>ʳ _ ⟩≡
+      f >~> id~>               ≡⟨ cong (λ x → f >~> x) (sym post-invert) ⟩
+      f >~> (s >~> r)           ⟨ law->~> _ _ _ ⟩≡
+      f >~> s >~> r            ≡⟨ whiskerʳ post ⟩
+      g >~> s >~> r            ≡⟨ law->~> _ _ _ ⟩
+      g >~> (s >~> r)          ≡⟨ cong (λ x → g >~> x) post-invert ⟩
+      g >~> id~>               ≡⟨ law-id~>ʳ _ ⟩
+      g
+      □
+    where open Split-Monic m
+
+
+  split-epic : {A B : Obj} {r : A ~> B} → Split-Epic r → Epic r
+  split-epic {A} {B} {r} m {f = f} {g = g} pre =
+      f                         ⟨ law-id~>ˡ _ ⟩≡
+      id~> >~> f               ≡⟨ cong (λ x → x >~> f) (sym pre-invert) ⟩
+      s >~> r >~> f            ≡⟨ law->~> _ _ _ ⟩
+      s >~> (r >~> f)          ≡⟨ whiskerˡ pre ⟩
+      s >~> (r >~> g)           ⟨ law->~> _ _ _ ⟩≡
+      s >~> r >~> g            ≡⟨ cong (λ x → x >~> g) pre-invert ⟩
+      id~> >~> g               ≡⟨ law-id~>ˡ _ ⟩
+      g
+      □
+    where open Split-Epic m
+
+
+module Functor-Split-Monic-Epic {C D : Category} (F : C => D)where
+  open Category
+  open Split-Monic-Epic
+  open _=>_ F
+
+  F-split-monic : {A B : Obj C} {s : _~>_ C A B} →
+                  Split-Monic {C} s →
+                  Split-Monic {D} (𝔽₁ s)
+  F-split-monic {A} {B} {s} m =
+    record { r = 𝔽₁ r
+           ; post-invert =  _>~>_ D (𝔽₁ s) (𝔽₁ r)     ⟨ F-map->~> s r ⟩≡
+                            𝔽₁ (_>~>_ C s r)         ≡⟨ cong (λ x → 𝔽₁ x) post-invert ⟩
+                            𝔽₁ (id~> C)              ≡⟨ F-map-id~> ⟩
+                            id~> D
+                            □
+           }
+    where open Split-Monic m
+
+  F-split-epic : {A B : Obj C} {r : _~>_ C A B} →
+                  Split-Epic {C} r →
+                  Split-Epic {D} (𝔽₁ r)
+  F-split-epic {A} {B} {r} m =
+    record { s = 𝔽₁ s
+           ; pre-invert =  _>~>_ D (𝔽₁ s) (𝔽₁ r)     ⟨ F-map->~> s r ⟩≡
+                            𝔽₁ (_>~>_ C s r)         ≡⟨ cong (λ x → 𝔽₁ x) pre-invert ⟩
+                            𝔽₁ (id~> C)              ≡⟨ F-map-id~> ⟩
+                            id~> D
+                            □
+           }
+    where open Split-Epic m
