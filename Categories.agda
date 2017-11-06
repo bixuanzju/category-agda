@@ -156,17 +156,8 @@ Cat-Preorder = record
              { Obj = SomePreorder
              ; _~>_ = λ m n → Subset (fst m → fst n) λ f → Monotone {{snd m}} {{snd n}} f
              ; id~> = id # record { resp≤ = id }
-             ; _>~>_ = mcom
-             ; law-id~>ˡ = λ _ → refl
-             ; law-id~>ʳ = λ _ → refl
-             ; law->~> = λ _ _ _ → refl
-             } where
-             mcom : {R S T : Σ Set Preorder} →
-                    Subset (fst R → fst S) (λ f → Monotone {{snd R}} {{snd S}} f) →
-                    Subset (fst S → fst T) (λ f → Monotone {{snd S}} {{snd T}} f) →
-                    Subset (fst R → fst T) (λ f → Monotone {{snd R}} {{snd T}} f)
-             mcom {R , m} {S , n} {T , s} (f # fm) (g # gm)
-                   = let instance
+             ; _>~>_ = λ { {R , m} {S , n} {T , s} (f # fm) (g # gm) →
+                    let instance
                            -- Bring instances into scope
                            _ : Preorder S
                            _ = n
@@ -175,6 +166,12 @@ Cat-Preorder = record
                            _ : Preorder T
                            _ = s
                      in f >> g # record { resp≤ = λ x≤y → Monotone.resp≤ gm (Monotone.resp≤ fm x≤y) }
+
+               }
+             ; law-id~>ˡ = λ _ → refl
+             ; law-id~>ʳ = λ _ → refl
+             ; law->~> = λ _ _ _ → refl
+             }
 
 
 -- Monoid homomorphism
@@ -189,34 +186,29 @@ CAT-MONOID  = record
                { Obj = SomeMonoid
                ; _~>_ = λ m n → Subset (fst m → fst n) λ f → MonoidHom {{snd m}} {{snd n}} f
                ; id~> = id # record { respε = refl ; resp⋆ = λ _ _ → refl }
-               ; _>~>_ = mcom
+               ; _>~>_ = λ { {R , m} {S , n} {T , s} (f # fm) (g # gm) →
+                       let instance
+                             _ : Monoid S
+                             _ = n
+                             _ : Monoid R
+                             _ = m
+                             _ : Monoid T
+                             _ = s
+                       in
+                       f >> g # record { respε = g (f ε)    ≡⟨ cong g (MonoidHom.respε fm) ⟩
+                                                 g ε        ≡⟨ MonoidHom.respε gm ⟩
+                                                 ε
+                                                 □
+                                       ; resp⋆ = λ a b → g (f (a ⋆ b))     ≡⟨ cong g (MonoidHom.resp⋆ fm a b) ⟩
+                                                         g (f a ⋆ f b)     ≡⟨ MonoidHom.resp⋆ gm (f a) (f b) ⟩
+                                                         g (f a) ⋆ g (f b)
+                                                         □
+                                       }
+                        }
                ; law-id~>ˡ = λ _ → refl
                ; law-id~>ʳ = λ _ → refl
                ; law->~> = λ _ _ _ → refl
-               } where
-                 mcom : {R S T : SomeMonoid} →
-                        Subset (fst R → fst S) (λ f → MonoidHom {{snd R}} {{snd S}} f) →
-                        Subset (fst S → fst T) (λ f → MonoidHom {{snd S}} {{snd T}} f) →
-                        Subset (fst R → fst T) (λ f → MonoidHom {{snd R}} {{snd T}} f)
-                 mcom {R , m} {S , n} {T , s} (f # fm) (g # gm)
-                   = let instance
-                           -- Bring instances into scope
-                           _ : Monoid S
-                           _ = n
-                           _ : Monoid R
-                           _ = m
-                           _ : Monoid T
-                           _ = s
-                     in
-                     f >> g # record { respε = g (f ε)    ≡⟨ cong g (MonoidHom.respε fm) ⟩
-                                               g ε        ≡⟨ MonoidHom.respε gm ⟩
-                                               ε
-                                               □
-                                     ; resp⋆ = λ a b → g (f (a ⋆ b))     ≡⟨ cong g (MonoidHom.resp⋆ fm a b) ⟩
-                                                       g (f a ⋆ f b)     ≡⟨ MonoidHom.resp⋆ gm (f a) (f b) ⟩
-                                                       g (f a) ⋆ g (f b)
-                                                       □
-                                     }
+               }
 
 
 ----------------------------------------------------------------------------
@@ -394,36 +386,35 @@ module ArrowCat (C : Category) where
   arrow = record
             { Obj = ArrowObj
             ; _~>_ = Arrow~>
-            ; id~> = aid
-            ; _>~>_ = acom
+            ; id~> = λ { {arrobj {A} {B} f} →
+                   arrarr (id~> {A}) (id~> {B})
+                          ( id~> >~> f            ≡⟨ law-id~>ˡ _ ⟩
+                            f                      ⟨ law-id~>ʳ _ ⟩≡
+                            f >~> id~>
+                            □
+                          )
+                   }
+            ; _>~>_ = λ { {arrobj {A} {B} f} {arrobj {C} {D} g} {arrobj {E} {F} h} ij kl →
+                    let i : A ~> C
+                        i = Arrow~>.i ij
+                        j : B ~> D
+                        j = Arrow~>.j ij
+                        k : C ~> E
+                        k = Arrow~>.i kl
+                        l : D ~> F
+                        l = Arrow~>.j kl
+                    in arrarr (i >~> k) (j >~> l)
+                              ( i >~> k >~> h                ≡⟨ law->~> i k h ⟩
+                                i >~> (k >~> h)              ≡⟨ whiskerˡ {f = i} (Arrow~>.commuteSquare kl) ⟩
+                                i >~> (g >~> l)               ⟨ law->~> i g l ⟩≡
+                                i >~> g >~> l                ≡⟨ whiskerʳ {h = l} (Arrow~>.commuteSquare ij) ⟩
+                                f >~> j >~> l                ≡⟨ law->~> f j l ⟩
+                                f >~> (j >~> l)
+                                □
+                              )
+
+                    }
             ; law-id~>ˡ = λ f → Arrow~>-≡ (law-id~>ˡ _) (law-id~>ˡ _)
             ; law-id~>ʳ = λ f → Arrow~>-≡ (law-id~>ʳ _) (law-id~>ʳ _)
             ; law->~> = λ f g h → Arrow~>-≡ (law->~> _ _ _) (law->~> _ _ _)
-            } where
-            aid : {T : ArrowObj} → Arrow~> T T
-            aid {arrobj {A} {B} f} = arrarr (id~> {A}) (id~> {B})
-                                            ( id~> >~> f            ≡⟨ law-id~>ˡ _ ⟩
-                                              f                      ⟨ law-id~>ʳ _ ⟩≡
-                                              f >~> id~>
-                                              □
-                                            )
-
-            acom : {f g h : ArrowObj} → Arrow~> f g → Arrow~> g h → Arrow~> f h
-            acom {arrobj {A} {B} f} {arrobj {C} {D} g} {arrobj {E} {F} h} ij kl =
-              let i : A ~> C
-                  i = Arrow~>.i ij
-                  j : B ~> D
-                  j = Arrow~>.j ij
-                  k : C ~> E
-                  k = Arrow~>.i kl
-                  l : D ~> F
-                  l = Arrow~>.j kl
-              in arrarr (i >~> k) (j >~> l)
-                        ( i >~> k >~> h                ≡⟨ law->~> i k h ⟩
-                          i >~> (k >~> h)              ≡⟨ whiskerˡ {f = i} (Arrow~>.commuteSquare kl) ⟩
-                          i >~> (g >~> l)               ⟨ law->~> i g l ⟩≡
-                          i >~> g >~> l                ≡⟨ whiskerʳ {h = l} (Arrow~>.commuteSquare ij) ⟩
-                          f >~> j >~> l                ≡⟨ law->~> f j l ⟩
-                          f >~> (j >~> l)
-                          □
-                        )
+            }
