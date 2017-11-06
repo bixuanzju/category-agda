@@ -634,3 +634,76 @@ module Functor-Split-Monic-Epic {C D : Category} (F : C => D)where
                             □
            }
     where open Split-Epic m
+
+
+----------------------------------------------------------------------------
+-- Isomorphisms
+----------------------------------------------------------------------------
+
+
+module Iso {C : Category} where
+  open Category C
+
+  record have-section {A B : Obj} (r : B ~> A) : Set where
+    field
+      s : A ~> B
+      section : s >~> r ≡ id~>
+
+  record have-retraction {A B : Obj} (s : A ~> B) : Set where
+    field
+      r : B ~> A
+      retraction : s >~> r ≡ id~>
+
+  sec≡retrac : {A B : Obj} {f : A ~> B}
+               {s : have-section f} {r : have-retraction f} →
+               have-section.s s ≡ have-retraction.r r
+  sec≡retrac {f = f} {record { s = s ; section = section }}
+                     {record { r = r ; retraction = retraction }} =
+             s                ⟨ law-id~>ʳ _ ⟩≡
+             s >~> id~>       ⟨ whiskerˡ retraction ⟩≡
+             s >~> (f >~> r)  ⟨ law->~> _ _ _ ⟩≡
+             s >~> f >~> r   ≡⟨ whiskerʳ section ⟩
+             id~> >~> r      ≡⟨ law-id~>ˡ _ ⟩
+             r
+             □
+
+  record isomorphism {A B : Obj} (f : A ~> B) : Set where
+    field
+      fʳ : B ~> A
+      inverse  : f >~> fʳ ≡ id~>
+      inverseʳ : fʳ >~> f ≡ id~>
+
+
+  record iso (A B : Obj) : Set where
+    field
+      f : A ~> B
+      iso-witness : isomorphism f
+
+  iso-refl : {A : Obj} → iso A A
+  iso-refl = record { f = id~> ; iso-witness = record { fʳ = id~> ; inverse = law-id~>ʳ _ ; inverseʳ = law-id~>ʳ _ } }
+
+  iso-sym : {A B : Obj} → iso A B → iso B A
+  iso-sym record { f = f ; iso-witness = record { fʳ = fʳ ; inverse = inverse ; inverseʳ = inverseʳ } } =
+    record { f = fʳ ; iso-witness = record { fʳ = f ; inverse = inverseʳ ; inverseʳ = inverse } }
+
+  iso-trans : {A B C : Obj} → iso A B → iso B C → iso A C
+  iso-trans record { f = f₁ ; iso-witness = record { fʳ = fʳ₁ ; inverse = inverse₁ ; inverseʳ = inverseʳ₁ } }
+            record { f = f₂ ; iso-witness = record { fʳ = fʳ₂ ; inverse = inverse₂ ; inverseʳ = inverseʳ₂ } } =
+            record { f = f₁ >~> f₂
+                   ; iso-witness = record { fʳ = fʳ₂ >~> fʳ₁
+                                          ; inverse = f₁ >~> f₂ >~> (fʳ₂ >~> fʳ₁) ≡⟨ law->~> _ _ _ ⟩
+                                            f₁ >~> (f₂ >~> (fʳ₂ >~> fʳ₁)) ≡⟨ whiskerˡ (sym (law->~> _ _ _)) ⟩
+                                            f₁ >~> (f₂ >~> fʳ₂ >~> fʳ₁) ≡⟨ cong (λ x → f₁ >~> (x >~> fʳ₁)) inverse₂ ⟩
+                                            f₁ >~> (id~> >~> fʳ₁) ≡⟨ whiskerˡ (law-id~>ˡ _) ⟩
+                                            f₁ >~> fʳ₁ ≡⟨ inverse₁ ⟩
+                                            id~>
+                                            □
+                                          ; inverseʳ = fʳ₂ >~> fʳ₁ >~> (f₁ >~> f₂) ≡⟨ law->~> _ _ _ ⟩
+                                            fʳ₂ >~> (fʳ₁ >~> (f₁ >~> f₂)) ≡⟨ whiskerˡ (sym (law->~> _ _ _)) ⟩
+                                            fʳ₂ >~> (fʳ₁ >~> f₁ >~> f₂) ≡⟨ cong (λ x → fʳ₂ >~> (x >~> f₂)) inverseʳ₁ ⟩
+                                            fʳ₂ >~> (id~> >~> f₂) ≡⟨ whiskerˡ (law-id~>ˡ _) ⟩
+                                            fʳ₂ >~> f₂ ≡⟨ inverseʳ₂ ⟩
+                                            id~>
+                                            □
+                                          }
+                   }
