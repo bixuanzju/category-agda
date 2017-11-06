@@ -405,9 +405,9 @@ module ArrowCat (C : Category) where
                         l = Arrow~>.j kl
                     in arrarr (i >~> k) (j >~> l)
                               ( i >~> k >~> h                ≡⟨ law->~> i k h ⟩
-                                i >~> (k >~> h)              ≡⟨ whiskerˡ {f = i} (Arrow~>.commuteSquare kl) ⟩
+                                i >~> (k >~> h)              ≡⟨ whiskerˡ (Arrow~>.commuteSquare kl) ⟩
                                 i >~> (g >~> l)               ⟨ law->~> i g l ⟩≡
-                                i >~> g >~> l                ≡⟨ whiskerʳ {h = l} (Arrow~>.commuteSquare ij) ⟩
+                                i >~> g >~> l                ≡⟨ whiskerʳ (Arrow~>.commuteSquare ij) ⟩
                                 f >~> j >~> l                ≡⟨ law->~> f j l ⟩
                                 f >~> (j >~> l)
                                 □
@@ -436,3 +436,47 @@ module ArrowCat (C : Category) where
   -- codomain functor
   cod-functor : arrow => C
   cod-functor = record { 𝔽₀ = ArrowObj.B ; 𝔽₁ = Arrow~>.j ; F-map-id~> = refl ; F-map->~> = λ _ _ → refl }
+
+
+
+-- Slice categories
+module SliceCat (C : Category) (A : Category.Obj C) where
+  open Category C
+
+  record SliceObj : Set where
+    constructor sliceobj
+    field
+      {B} : Obj
+      arr : B ~> A
+
+
+  record Slice~> (X Y : SliceObj) : Set where
+    constructor slicearr
+    module X = SliceObj X
+    module Y = SliceObj Y
+    field
+      p : X.B ~> Y.B
+      .commuteTri : p >~> Y.arr ≡ X.arr
+
+  Arrow~>-≡ : ∀ {X Y} → {f g : Slice~> X Y} → Slice~>.p f ≡ Slice~>.p g → f ≡ g
+  Arrow~>-≡ {f = slicearr _ _} {g = slicearr _ _} eq rewrite eq  = refl
+
+  slice : Category
+  slice = record
+            { Obj = SliceObj
+            ; _~>_ = Slice~>
+            ; id~> = slicearr id~> (law-id~>ˡ _)
+            ; _>~>_ =
+              λ { {sliceobj r} {sliceobj s} {sliceobj t} (slicearr f f-prf) (slicearr g g-prf) →
+                  slicearr (f >~> g)
+                         ( f >~> g >~> t           ≡⟨ law->~> _ _ _ ⟩
+                           f >~> (g >~> t)         ≡⟨ whiskerˡ g-prf ⟩
+                           f >~> s                 ≡⟨ f-prf ⟩
+                           r
+                           □
+                         )
+                }
+            ; law-id~>ˡ = λ _ → Arrow~>-≡ (law-id~>ˡ _)
+            ; law-id~>ʳ = λ _ → Arrow~>-≡ (law-id~>ʳ _)
+            ; law->~> = λ _ _ _ → Arrow~>-≡ (law->~> _ _ _)
+            }
