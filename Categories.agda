@@ -71,28 +71,21 @@ record Preorder (X : Set) : Set where
   field
     _≤_ : X → X → Set
     ≤-refl : (x : X) → x ≤ x
-    ≤-trans : {x y z : X} → x ≤ y → y ≤ z → x ≤ z
-    ≤-unique : {x y : X} → (p q : x ≤ y) → p ≡ q
+    ≤-trans : (x y z : X) → x ≤ y → y ≤ z → x ≤ z
+    ≤-unique : (x y : X) → (p q : x ≤ y) → p ≡ q
 open Preorder {{...}} public
 
 
-SomePreorder : Set
-SomePreorder = Σ Set Preorder
-
 -- Preorder is a category
-PREORDER : SomePreorder → Category
-PREORDER (X , m) =
-  let instance
-        _ : Preorder X
-        _ = m
-  in  record
+PREORDER : {X : Set} {{_ : Preorder X}} → Category
+PREORDER {X} = record
              { Obj = X
              ; _~>_ = _≤_
-             ; id~> = λ {x} → ≤-refl x
-             ; _>~>_ = λ f g → ≤-trans {{m}} f g
-             ; law-id~>ˡ = λ f → ≤-unique {{m}} _ _
-             ; law-id~>ʳ = λ f → ≤-unique  {{m}} _ _
-             ; law->~> = λ f g h → ≤-unique {{m}} _ _
+             ; id~> = λ {T} → ≤-refl T
+             ; _>~>_ = λ {R} {S} {T} f g → ≤-trans R S T f g
+             ; law-id~>ˡ = λ {S} {T} _ → ≤-unique S T _ _
+             ; law-id~>ʳ = λ {S} {T} _ → ≤-unique S T _ _
+             ; law->~> = λ {Q} {R} {S} {T} f g h → ≤-unique Q T _ _
              }
 
 
@@ -106,17 +99,11 @@ record Monoid (X : Set) : Set where
     assoc   : (x y z : X) → (x ⋆ y) ⋆ z ≡ x ⋆ (y ⋆ z)
 open Monoid {{...}} public
 
-SomeMonoid : Set
-SomeMonoid = Σ Set Monoid
-
 
 -- Monoid is a category
-MONOID : SomeMonoid → Category
-MONOID (X , m)
-  = let instance
-          _ : Monoid X
-          _ = m
-    in record
+MONOID : {X : Set} {{_ : Monoid X}} → Category
+MONOID {X}
+  =   record
        { Obj = One
        ; _~>_ = λ _ _ → X
        ; id~> = ε
@@ -144,17 +131,20 @@ SET = record
         }
 
 -- Monotone
-record Monotone {X} {{MX : Preorder X}} {Y} {{MY : Preorder Y}} (f : X  → Y) : Set where
+record Monotone {X} {{MX : Preorder X}} {Y} {{MY : Preorder Y}} (f : X → Y) : Set where
   field
     resp≤ : ∀ {x x'} → x ≤ x' → f x ≤ f x'
 
+
+SomePreorder : Set
+SomePreorder = Σ Set Preorder
 
 
 -- The category of preorders
 Cat-Preorder : Category
 Cat-Preorder = record
              { Obj = SomePreorder
-             ; _~>_ = λ m n → Subset (fst m → fst n) λ f → Monotone {{snd m}} {{snd n}} f
+             ; _~>_ = λ { (m , ≤m) (n , ≤n) → Subset (m → n) λ f → Monotone {{_}} {{_}} f }
              ; id~> = id # record { resp≤ = id }
              ; _>~>_ = λ { {R , m} {S , n} {T , s} (f # fm) (g # gm) →
                     let instance
@@ -180,11 +170,15 @@ record MonoidHom {X} {{MX : Monoid X}} {Y} {{MY : Monoid Y}} (f : X  → Y) : Se
     respε : f ε ≡ ε
     resp⋆ : ∀ x x' → f (x ⋆ x') ≡ f x ⋆ f x'
 
+
+SomeMonoid : Set
+SomeMonoid = Σ Set Monoid
+
 -- The category of monoids
 CAT-MONOID : Category
 CAT-MONOID  = record
                { Obj = SomeMonoid
-               ; _~>_ = λ m n → Subset (fst m → fst n) λ f → MonoidHom {{snd m}} {{snd n}} f
+               ; _~>_ = λ { (m , ⋆m) (n , ⋆n) → Subset (m → n) λ f → MonoidHom {{_}} {{_}} f  }
                ; id~> = id # record { respε = refl ; resp⋆ = λ _ _ → refl }
                ; _>~>_ = λ { {R , m} {S , n} {T , s} (f # fm) (g # gm) →
                        let instance
@@ -315,15 +309,12 @@ CATEGORY = record
 
 
 -- A forgetful functor
-U : {m : SomeMonoid} → MONOID m => SET
-U {X , mon} =
-  let instance
-        _ : Monoid X
-        _ = mon
-  in record { 𝔽₀ = λ _ → X ; 𝔽₁ = λ x y → y ⋆ x -- note the order
-            ; F-map-id~> = extensionality absorbR
-            ; F-map->~> = λ x y → extensionality λ z → sym (assoc z x y)
-            }
+U : ∀ {X} {{m : Monoid X}} → MONOID {{m}} => SET
+U {X} = record { 𝔽₀ = λ _ → X
+               ; 𝔽₁ = λ x y →  y ⋆ x
+               ; F-map-id~> = extensionality absorbR
+               ; F-map->~> = λ x y → extensionality λ z → sym (assoc z x y)
+               }
 
 
 -- A representable functor
