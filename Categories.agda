@@ -25,14 +25,14 @@ record Category : Set where
     -- Composition right unit law
     law-id~>ʳ : {S T : Obj}     (f : S ~> T) → f >~> id~> ≡ f
     -- Composition associative law
-    law->~>  : {Q R S T : Obj} (f : Q ~> R)(g : R ~> S)(h : S ~> T) → (f >~> g) >~> h ≡ f >~> (g >~> h)
+    law->~>  : {Q R S T : Obj} (f : Q ~> R) (g : R ~> S)(h : S ~> T) → (f >~> g) >~> h ≡ f >~> (g >~> h)
 
 
   -- The so-called whiskering
-  whiskerˡ : {A B C : Obj} {g1 g2 : B ~> C} {f : A ~> B}  → g1 ≡ g2 → f >~> g1 ≡ f >~> g2
+  whiskerˡ : {A B C : Obj} {g1 g2 : B ~> C} {f : A ~> B} → g1 ≡ g2 → f >~> g1 ≡ f >~> g2
   whiskerˡ {f = f} refl = refl
 
-  whiskerʳ : {B C D : Obj} {g1 g2 : B ~> C} {h : C ~> D}  → g1 ≡ g2 → g1 >~> h ≡ g2 >~> h
+  whiskerʳ : {B C D : Obj} {g1 g2 : B ~> C} {h : C ~> D} → g1 ≡ g2 → g1 >~> h ≡ g2 >~> h
   whiskerʳ {h = h} refl = refl
 
 
@@ -689,21 +689,21 @@ module Iso {C : Category} where
   iso-trans : {A B C : Obj} → iso A B → iso B C → iso A C
   iso-trans record { f = f₁ ; iso-witness = record { fʳ = fʳ₁ ; inverse = inverse₁ ; inverseʳ = inverseʳ₁ } }
             record { f = f₂ ; iso-witness = record { fʳ = fʳ₂ ; inverse = inverse₂ ; inverseʳ = inverseʳ₂ } } =
-            record { f = f₁ >~> f₂
-                   ; iso-witness = record { fʳ = fʳ₂ >~> fʳ₁
-                                          ; inverse = f₁ >~> f₂ >~> (fʳ₂ >~> fʳ₁) ≡⟨ law->~> _ _ _ ⟩
-                                            f₁ >~> (f₂ >~> (fʳ₂ >~> fʳ₁)) ≡⟨ whiskerˡ (sym (law->~> _ _ _)) ⟩
-                                            f₁ >~> (f₂ >~> fʳ₂ >~> fʳ₁) ≡⟨ cong (λ x → f₁ >~> (x >~> fʳ₁)) inverse₂ ⟩
-                                            f₁ >~> (id~> >~> fʳ₁) ≡⟨ whiskerˡ (law-id~>ˡ _) ⟩
-                                            f₁ >~> fʳ₁ ≡⟨ inverse₁ ⟩
-                                            id~>
-                                            □
-                                          ; inverseʳ = fʳ₂ >~> fʳ₁ >~> (f₁ >~> f₂) ≡⟨ law->~> _ _ _ ⟩
-                                            fʳ₂ >~> (fʳ₁ >~> (f₁ >~> f₂)) ≡⟨ whiskerˡ (sym (law->~> _ _ _)) ⟩
-                                            fʳ₂ >~> (fʳ₁ >~> f₁ >~> f₂) ≡⟨ cong (λ x → fʳ₂ >~> (x >~> f₂)) inverseʳ₁ ⟩
-                                            fʳ₂ >~> (id~> >~> f₂) ≡⟨ whiskerˡ (law-id~>ˡ _) ⟩
-                                            fʳ₂ >~> f₂ ≡⟨ inverseʳ₂ ⟩
-                                            id~>
-                                            □
-                                          }
-                   }
+     record { f = f₁ >~> f₂
+            ; iso-witness = record { fʳ = fʳ₂ >~> fʳ₁
+                                   ; inverse = f₁ >~> f₂ >~> (fʳ₂ >~> fʳ₁)   ≡⟨ law->~> _ _ _ ⟩
+                                               f₁ >~> (f₂ >~> (fʳ₂ >~> fʳ₁)) ≡⟨ whiskerˡ (sym (law->~> _ _ _)) ⟩
+                                               f₁ >~> (f₂ >~> fʳ₂ >~> fʳ₁)   ≡⟨ cong (λ x → f₁ >~> (x >~> fʳ₁)) inverse₂ ⟩
+                                               f₁ >~> (id~> >~> fʳ₁)         ≡⟨ whiskerˡ (law-id~>ˡ _) ⟩
+                                               f₁ >~> fʳ₁                    ≡⟨ inverse₁ ⟩
+                                               id~>
+                                               □
+                                   ; inverseʳ = fʳ₂ >~> fʳ₁ >~> (f₁ >~> f₂)    ≡⟨ law->~> _ _ _ ⟩
+                                                fʳ₂ >~> (fʳ₁ >~> (f₁ >~> f₂))  ≡⟨ whiskerˡ (sym (law->~> _ _ _)) ⟩
+                                                fʳ₂ >~> (fʳ₁ >~> f₁ >~> f₂)    ≡⟨ cong (λ x → fʳ₂ >~> (x >~> f₂)) inverseʳ₁ ⟩
+                                                fʳ₂ >~> (id~> >~> f₂)          ≡⟨ whiskerˡ (law-id~>ˡ _) ⟩
+                                                fʳ₂ >~> f₂                     ≡⟨ inverseʳ₂ ⟩
+                                                id~>
+                                                □
+                                   }
+            }
