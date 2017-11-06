@@ -418,3 +418,21 @@ module ArrowCat (C : Category) where
             ; law-id~>ʳ = λ f → Arrow~>-≡ (law-id~>ʳ _) (law-id~>ʳ _)
             ; law->~> = λ f g h → Arrow~>-≡ (law->~> _ _ _) (law->~> _ _ _)
             }
+
+
+  -- Domain functor
+  dom-functor : arrow => C
+  dom-functor = record { 𝔽₀ = ArrowObj.A ; 𝔽₁ = Arrow~>.i ; F-map-id~> = refl ; F-map->~> = λ _ _ → refl }
+
+  -- reflexivity functor
+  refl-functor : C => arrow
+  refl-functor =
+    record { 𝔽₀ = λ x → arrobj (id~> {x})
+           ; 𝔽₁ = λ x → arrarr x x (x >~> id~> ≡⟨ law-id~>ʳ x ⟩ x ⟨ law-id~>ˡ x ⟩≡ id~> >~> x □)
+           ; F-map-id~> = refl
+           ; F-map->~> = λ f g → refl
+           }
+
+  -- codomain functor
+  cod-functor : arrow => C
+  cod-functor = record { 𝔽₀ = ArrowObj.B ; 𝔽₁ = Arrow~>.j ; F-map-id~> = refl ; F-map->~> = λ _ _ → refl }

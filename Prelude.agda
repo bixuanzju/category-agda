@@ -240,6 +240,6 @@ extensionality' : {S : Set}{T : S → Set}
 extensionality' {f = f} {g = g} q =  cong imp (extensionality {f = λ x → f {x}} {g = λ x → g {x}} q)
 
 
--- Unique equality proof
+-- Unique equality proof (need K axiom)
 eqUnique : {X : Set}{x y : X}(p q : x ≡ y) → p ≡ q
 eqUnique refl refl = refl
