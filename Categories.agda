@@ -498,3 +498,68 @@ module Post-Composition-Functor {C : Category} {A B : Category.Obj C} (f : Categ
                        }
               ; F-map-id~> = refl
               ; F-map->~> = λ _ _ → refl }
+
+
+----------------------------------------------------------------------------
+-- Monic and epic morphisms
+----------------------------------------------------------------------------
+
+module MONIC-EPIC {C : Category} where
+  open Category C
+
+  Monic : {A B : Obj} (↣ : A ~> B) → Set
+  Monic {A} {B} ↣ = ∀ {C} {f g : C ~> A} → f >~> ↣ ≡ g >~> ↣ → f ≡ g
+
+
+  Epic : {A B : Obj} (↠ : A ~> B) → Set
+  Epic {A} {B} ↠ = ∀ {C} {f g : B ~> C} → ↠ >~> f ≡ ↠ >~> g → f ≡ g
+
+  id-monic : ∀ {T} → Monic (id~> {T})
+  id-monic {f = f} {g = g} post = f              ⟨ law-id~>ʳ _ ⟩≡
+                                  f >~> id~>    ≡⟨ post ⟩
+                                  g >~> id~>    ≡⟨ law-id~>ʳ _ ⟩
+                                  g
+                                  □
+
+  id-epic : ∀ {T} → Epic (id~> {T})
+  id-epic {f = f} {g = g} pre = f              ⟨ law-id~>ˡ _ ⟩≡
+                                id~> >~> f    ≡⟨ pre ⟩
+                                id~> >~> g    ≡⟨ law-id~>ˡ _ ⟩
+                                g
+                                □
+
+  >~>-monic : ∀ {A B C} {m : A ~> B} {n : B ~> C} → Monic m → Monic n → Monic (m >~> n)
+  >~>-monic {m = m} {n = n}  ↣m ↣n {f = f} {g = g} post = ↣m (↣n help)
+    where help : f >~> m >~> n ≡ g >~> m >~> n
+          help = f >~> m >~> n        ≡⟨ law->~> _ _ _ ⟩
+                 f >~> (m >~> n)      ≡⟨ post ⟩
+                 g >~> (m >~> n)       ⟨ law->~> _ _ _ ⟩≡
+                 g >~> m >~> n
+                 □
+
+  >~>-epic : ∀ {A B C} {m : A ~> B} {n : B ~> C} → Epic m → Epic n → Epic (m >~> n)
+  >~>-epic {m = m} {n = n}  ↠m ↠n {f = f} {g = g} pre = ↠n (↠m help)
+    where help : m >~> (n >~> f) ≡ m >~> (n >~> g)
+          help = m >~> (n >~> f) ⟨ law->~> _ _ _ ⟩≡
+                 m >~> n >~> f ≡⟨ pre ⟩
+                 m >~> n >~> g ≡⟨ law->~> _ _ _ ⟩
+                 m >~> (n >~> g)
+                 □
+
+  >~>-monicʳ : ∀ {A B C} {m : A ~> B} {n : B ~> C} → Monic (m >~> n) → Monic m
+  >~>-monicʳ {m = m} {n = n} ↣mn {f = f} {g = g} post = ↣mn help
+    where help : f >~> (m >~> n) ≡ g >~> (m >~> n)
+          help = f >~> (m >~> n) ⟨ law->~> _ _ _ ⟩≡
+                 f >~> m >~> n ≡⟨ whiskerʳ post ⟩
+                 g >~> m >~> n ≡⟨ law->~> _ _ _ ⟩
+                 g >~> (m >~> n)
+                 □
+
+  >~>-epicʳ : ∀ {A B C} {m : A ~> B} {n : B ~> C} → Epic (m >~> n) → Epic n
+  >~>-epicʳ {m = m} {n = n} ↠mn {f = f} {g = g} pre = ↠mn help
+    where help : m >~> n >~> f ≡ m >~> n >~> g
+          help = m >~> n >~> f ≡⟨ law->~> _ _ _ ⟩
+                 m >~> (n >~> f) ≡⟨ whiskerˡ pre ⟩
+                 m >~> (n >~> g) ⟨ law->~> _ _ _ ⟩≡
+                 m >~> n >~> g
+                 □
