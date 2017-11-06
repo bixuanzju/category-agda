@@ -480,3 +480,21 @@ module SliceCat (C : Category) (A : Category.Obj C) where
             ; law-id~>ʳ = λ _ → Arrow~>-≡ (law-id~>ʳ _)
             ; law->~> = λ _ _ _ → Arrow~>-≡ (law->~> _ _ _)
             }
+
+
+module Post-Composition-Functor {C : Category} {A B : Category.Obj C} (f : Category._~>_ C A B) where
+  open Category C
+  module C/A = SliceCat C A
+  module C/B = SliceCat C B
+
+  f! : C/A.slice => C/B.slice
+  f! = record { 𝔽₀ = λ x → C/B.SliceObj.sliceobj (C/A.SliceObj.arr x >~> f)
+              ; 𝔽₁ = λ {x} {y} p →
+                C/B.slicearr (C/A.Slice~>.p p)
+                             ( C/A.Slice~>.p p >~> (C/A.SliceObj.arr y >~> f)       ⟨ law->~> _ _ _ ⟩≡
+                               C/A.Slice~>.p p >~> C/A.SliceObj.arr y >~> f        ≡⟨ whiskerʳ (C/A.Slice~>.commuteTri p) ⟩
+                               C/A.SliceObj.arr x >~> f
+                               □
+                             )
+              ; F-map-id~> = refl
+              ; F-map->~> = λ _ _ → refl }
