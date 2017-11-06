@@ -488,13 +488,13 @@ module Post-Composition-Functor {C : Category} {A B : Category.Obj C} (f : Categ
   module C/B = SliceCat C B
 
   f! : C/A.slice => C/B.slice
-  f! = record { 𝔽₀ = λ x → C/B.SliceObj.sliceobj (C/A.SliceObj.arr x >~> f)
-              ; 𝔽₁ = λ {x} {y} p →
-                C/B.slicearr (C/A.Slice~>.p p)
-                             ( C/A.Slice~>.p p >~> (C/A.SliceObj.arr y >~> f)       ⟨ law->~> _ _ _ ⟩≡
-                               C/A.Slice~>.p p >~> C/A.SliceObj.arr y >~> f        ≡⟨ whiskerʳ (C/A.Slice~>.commuteTri p) ⟩
-                               C/A.SliceObj.arr x >~> f
-                               □
-                             )
+  f! = record { 𝔽₀ = λ { (C/A.SliceObj.sliceobj x) → C/B.SliceObj.sliceobj (x >~> f) }
+              ; 𝔽₁ = λ { {C/A.SliceObj.sliceobj x} {C/A.SliceObj.sliceobj y}  (C/A.Slice~>.slicearr p p-prf) →
+                          C/B.slicearr p ( p >~> (y >~> f)       ⟨ law->~> _ _ _ ⟩≡
+                                           p >~> y >~> f        ≡⟨ whiskerʳ p-prf ⟩
+                                           x >~> f
+                                           □
+                                         )
+                       }
               ; F-map-id~> = refl
               ; F-map->~> = λ _ _ → refl }
