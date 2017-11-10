@@ -189,12 +189,12 @@ CAT-MONOID  = record
                              _ : Monoid T
                              _ = s
                        in
-                       f >> g # record { respε = g (f ε)    ≡⟨ cong g (MonoidHom.respε fm) ⟩
-                                                 g ε        ≡⟨ MonoidHom.respε gm ⟩
+                       f >> g # record { respε = g (f ε)               ≡⟨ cong g (MonoidHom.respε fm) ⟩
+                                                 g ε                   ≡⟨ MonoidHom.respε gm ⟩
                                                  ε
                                                  □
-                                       ; resp⋆ = λ a b → g (f (a ⋆ b))     ≡⟨ cong g (MonoidHom.resp⋆ fm a b) ⟩
-                                                         g (f a ⋆ f b)     ≡⟨ MonoidHom.resp⋆ gm (f a) (f b) ⟩
+                                       ; resp⋆ = λ a b → g (f (a ⋆ b)) ≡⟨ cong g (MonoidHom.resp⋆ fm a b) ⟩
+                                                         g (f a ⋆ f b) ≡⟨ MonoidHom.resp⋆ gm (f a) (f b) ⟩
                                                          g (f a) ⋆ g (f b)
                                                          □
                                        }
@@ -239,12 +239,12 @@ module FUNCTOR-CP {C D E : Category} where
   _>=>_ : C => D → D => E → C => E
   𝔽₀ (F >=> G) = 𝔽₀ F >> 𝔽₀ G
   𝔽₁ (F >=> G) = 𝔽₁ F >> 𝔽₁ G
-  F-map-id~> (F >=> G) = 𝔽₁ G (𝔽₁ F (id~> C))         ≡⟨ cong (𝔽₁ G) (F-map-id~> F) ⟩
-                         𝔽₁ G (id~> D)                ≡⟨ F-map-id~> G ⟩
+  F-map-id~> (F >=> G) = 𝔽₁ G (𝔽₁ F (id~> C))                          ≡⟨ cong (𝔽₁ G) (F-map-id~> F) ⟩
+                         𝔽₁ G (id~> D)                                 ≡⟨ F-map-id~> G ⟩
                          id~> E
                          □
-  F-map->~> (F >=> G) f g =  𝔽₁ G (𝔽₁ F (_>~>_ C f g))                      ≡⟨ cong (𝔽₁ G) (F-map->~> F f g) ⟩
-                             𝔽₁ G (_>~>_ D (𝔽₁ F f) (𝔽₁ F g))               ≡⟨ F-map->~> G (𝔽₁ F f) (𝔽₁ F g) ⟩
+  F-map->~> (F >=> G) f g =  𝔽₁ G (𝔽₁ F (_>~>_ C f g))                 ≡⟨ cong (𝔽₁ G) (F-map->~> F f g) ⟩
+                             𝔽₁ G (_>~>_ D (𝔽₁ F f) (𝔽₁ F g))          ≡⟨ F-map->~> G (𝔽₁ F f) (𝔽₁ F g) ⟩
                              _>~>_ E (𝔽₁ G (𝔽₁ F f)) (𝔽₁ G (𝔽₁ F g))
                              □
 
@@ -327,6 +327,7 @@ module Rep (C : Category) where
                 ; F-map->~> = λ f g → extensionality λ x → sym (law->~> x f g)
                 }
 
+open Rep public
 
 ----------------------------------------------------------------------------
 -- New categories from old
@@ -379,8 +380,8 @@ module ArrowCat (C : Category) where
             ; _~>_ = Arrow~>
             ; id~> = λ { {arrobj {A} {B} f} →
                    arrarr (id~> {A}) (id~> {B})
-                          ( id~> >~> f            ≡⟨ law-id~>ˡ _ ⟩
-                            f                      ⟨ law-id~>ʳ _ ⟩≡
+                          ( id~> >~> f                                 ≡⟨ law-id~>ˡ _ ⟩
+                            f                                           ⟨ law-id~>ʳ _ ⟩≡
                             f >~> id~>
                             □
                           )
@@ -395,11 +396,11 @@ module ArrowCat (C : Category) where
                         l : D ~> F
                         l = Arrow~>.j kl
                     in arrarr (i >~> k) (j >~> l)
-                              ( i >~> k >~> h                ≡⟨ law->~> i k h ⟩
-                                i >~> (k >~> h)              ≡⟨ whiskerˡ (Arrow~>.commuteSquare kl) ⟩
-                                i >~> (g >~> l)               ⟨ law->~> i g l ⟩≡
-                                i >~> g >~> l                ≡⟨ whiskerʳ (Arrow~>.commuteSquare ij) ⟩
-                                f >~> j >~> l                ≡⟨ law->~> f j l ⟩
+                              ( i >~> k >~> h                          ≡⟨ law->~> i k h ⟩
+                                i >~> (k >~> h)                        ≡⟨ whiskerˡ (Arrow~>.commuteSquare kl) ⟩
+                                i >~> (g >~> l)                         ⟨ law->~> i g l ⟩≡
+                                i >~> g >~> l                          ≡⟨ whiskerʳ (Arrow~>.commuteSquare ij) ⟩
+                                f >~> j >~> l                          ≡⟨ law->~> f j l ⟩
                                 f >~> (j >~> l)
                                 □
                               )
@@ -419,7 +420,10 @@ module ArrowCat (C : Category) where
   refl-functor : C => arrow
   refl-functor =
     record { 𝔽₀ = λ x → arrobj (id~> {x})
-           ; 𝔽₁ = λ x → arrarr x x (x >~> id~> ≡⟨ law-id~>ʳ x ⟩ x ⟨ law-id~>ˡ x ⟩≡ id~> >~> x □)
+           ; 𝔽₁ = λ x → arrarr x x (x >~> id~>                         ≡⟨ law-id~>ʳ x ⟩
+                                    x                                   ⟨ law-id~>ˡ x ⟩≡
+                                    id~> >~> x
+                                    □)
            ; F-map-id~> = refl
            ; F-map->~> = λ f g → refl
            }
@@ -460,9 +464,9 @@ module SliceCat (C : Category) (A : Category.Obj C) where
             ; _>~>_ =
               λ { {sliceobj r} {sliceobj s} {sliceobj t} (slicearr f f-prf) (slicearr g g-prf) →
                   slicearr (f >~> g)
-                         ( f >~> g >~> t           ≡⟨ law->~> _ _ _ ⟩
-                           f >~> (g >~> t)         ≡⟨ whiskerˡ g-prf ⟩
-                           f >~> s                 ≡⟨ f-prf ⟩
+                         ( f >~> g >~> t                               ≡⟨ law->~> _ _ _ ⟩
+                           f >~> (g >~> t)                             ≡⟨ whiskerˡ g-prf ⟩
+                           f >~> s                                     ≡⟨ f-prf ⟩
                            r
                            □
                          )
@@ -481,8 +485,8 @@ module Post-Composition-Functor {C : Category} {A B : Category.Obj C} (f : Categ
   f! : C/A.slice => C/B.slice
   f! = record { 𝔽₀ = λ { (C/A.SliceObj.sliceobj x) → C/B.SliceObj.sliceobj (x >~> f) }
               ; 𝔽₁ = λ { {C/A.SliceObj.sliceobj x} {C/A.SliceObj.sliceobj y}  (C/A.Slice~>.slicearr p p-prf) →
-                          C/B.slicearr p ( p >~> (y >~> f)       ⟨ law->~> _ _ _ ⟩≡
-                                           p >~> y >~> f        ≡⟨ whiskerʳ p-prf ⟩
+                          C/B.slicearr p ( p >~> (y >~> f)              ⟨ law->~> _ _ _ ⟩≡
+                                           p >~> y >~> f               ≡⟨ whiskerʳ p-prf ⟩
                                            x >~> f
                                            □
                                          )
@@ -495,7 +499,7 @@ module Post-Composition-Functor {C : Category} {A B : Category.Obj C} (f : Categ
 -- Monic and epic morphisms
 ----------------------------------------------------------------------------
 
-module Monic-Epic {C : Category} where
+module Monic-Epic (C : Category) where
   open Category C
 
   Monic : {A B : Obj} (↣ : A ~> B) → Set
@@ -506,52 +510,52 @@ module Monic-Epic {C : Category} where
   Epic {A} {B} ↠ = ∀ {C} {f g : B ~> C} → ↠ >~> f ≡ ↠ >~> g → f ≡ g
 
   id-monic : ∀ {T} → Monic (id~> {T})
-  id-monic {f = f} {g = g} post = f              ⟨ law-id~>ʳ _ ⟩≡
-                                  f >~> id~>    ≡⟨ post ⟩
-                                  g >~> id~>    ≡⟨ law-id~>ʳ _ ⟩
+  id-monic {f = f} {g = g} post = f                                     ⟨ law-id~>ʳ _ ⟩≡
+                                  f >~> id~>                           ≡⟨ post ⟩
+                                  g >~> id~>                           ≡⟨ law-id~>ʳ _ ⟩
                                   g
                                   □
 
   id-epic : ∀ {T} → Epic (id~> {T})
-  id-epic {f = f} {g = g} pre = f              ⟨ law-id~>ˡ _ ⟩≡
-                                id~> >~> f    ≡⟨ pre ⟩
-                                id~> >~> g    ≡⟨ law-id~>ˡ _ ⟩
+  id-epic {f = f} {g = g} pre = f                                       ⟨ law-id~>ˡ _ ⟩≡
+                                id~> >~> f                             ≡⟨ pre ⟩
+                                id~> >~> g                             ≡⟨ law-id~>ˡ _ ⟩
                                 g
                                 □
 
   >~>-monic : ∀ {A B C} {m : A ~> B} {n : B ~> C} → Monic m → Monic n → Monic (m >~> n)
   >~>-monic {m = m} {n = n}  ↣m ↣n {f = f} {g = g} post = ↣m (↣n help)
     where help : f >~> m >~> n ≡ g >~> m >~> n
-          help = f >~> m >~> n        ≡⟨ law->~> _ _ _ ⟩
-                 f >~> (m >~> n)      ≡⟨ post ⟩
-                 g >~> (m >~> n)       ⟨ law->~> _ _ _ ⟩≡
+          help = f >~> m >~> n                                         ≡⟨ law->~> _ _ _ ⟩
+                 f >~> (m >~> n)                                       ≡⟨ post ⟩
+                 g >~> (m >~> n)                                        ⟨ law->~> _ _ _ ⟩≡
                  g >~> m >~> n
                  □
 
   >~>-epic : ∀ {A B C} {m : A ~> B} {n : B ~> C} → Epic m → Epic n → Epic (m >~> n)
   >~>-epic {m = m} {n = n}  ↠m ↠n {f = f} {g = g} pre = ↠n (↠m help)
     where help : m >~> (n >~> f) ≡ m >~> (n >~> g)
-          help = m >~> (n >~> f) ⟨ law->~> _ _ _ ⟩≡
-                 m >~> n >~> f ≡⟨ pre ⟩
-                 m >~> n >~> g ≡⟨ law->~> _ _ _ ⟩
+          help = m >~> (n >~> f)                                        ⟨ law->~> _ _ _ ⟩≡
+                 m >~> n >~> f                                         ≡⟨ pre ⟩
+                 m >~> n >~> g                                         ≡⟨ law->~> _ _ _ ⟩
                  m >~> (n >~> g)
                  □
 
   >~>-monicʳ : ∀ {A B C} {m : A ~> B} {n : B ~> C} → Monic (m >~> n) → Monic m
   >~>-monicʳ {m = m} {n = n} ↣mn {f = f} {g = g} post = ↣mn help
     where help : f >~> (m >~> n) ≡ g >~> (m >~> n)
-          help = f >~> (m >~> n) ⟨ law->~> _ _ _ ⟩≡
-                 f >~> m >~> n ≡⟨ whiskerʳ post ⟩
-                 g >~> m >~> n ≡⟨ law->~> _ _ _ ⟩
+          help = f >~> (m >~> n)                                        ⟨ law->~> _ _ _ ⟩≡
+                 f >~> m >~> n                                         ≡⟨ whiskerʳ post ⟩
+                 g >~> m >~> n                                         ≡⟨ law->~> _ _ _ ⟩
                  g >~> (m >~> n)
                  □
 
   >~>-epicʳ : ∀ {A B C} {m : A ~> B} {n : B ~> C} → Epic (m >~> n) → Epic n
   >~>-epicʳ {m = m} {n = n} ↠mn {f = f} {g = g} pre = ↠mn help
     where help : m >~> n >~> f ≡ m >~> n >~> g
-          help = m >~> n >~> f ≡⟨ law->~> _ _ _ ⟩
-                 m >~> (n >~> f) ≡⟨ whiskerˡ pre ⟩
-                 m >~> (n >~> g) ⟨ law->~> _ _ _ ⟩≡
+          help = m >~> n >~> f                                         ≡⟨ law->~> _ _ _ ⟩
+                 m >~> (n >~> f)                                       ≡⟨ whiskerˡ pre ⟩
+                 m >~> (n >~> g)                                        ⟨ law->~> _ _ _ ⟩≡
                  m >~> n >~> g
                  □
 
@@ -562,9 +566,9 @@ module Monic-Epic {C : Category} where
 ----------------------------------------------------------------------------
 
 
-module Split-Monic-Epic {C : Category} where
+module Split-Monic-Epic (C : Category) where
   open Category C
-  open Monic-Epic {C}
+  open Monic-Epic C
 
   record Split-Monic {A B : Obj} (s : A ~> B) : Set where
     field
@@ -578,13 +582,13 @@ module Split-Monic-Epic {C : Category} where
 
   split-monic : {A B : Obj} {s : A ~> B} → Split-Monic s → Monic s
   split-monic {A} {B} {s} m {f = f} {g = g} post =
-      f                         ⟨ law-id~>ʳ _ ⟩≡
-      f >~> id~>               ≡⟨ cong (λ x → f >~> x) (sym post-invert) ⟩
-      f >~> (s >~> r)           ⟨ law->~> _ _ _ ⟩≡
-      f >~> s >~> r            ≡⟨ whiskerʳ post ⟩
-      g >~> s >~> r            ≡⟨ law->~> _ _ _ ⟩
-      g >~> (s >~> r)          ≡⟨ cong (λ x → g >~> x) post-invert ⟩
-      g >~> id~>               ≡⟨ law-id~>ʳ _ ⟩
+      f                                                                 ⟨ law-id~>ʳ _ ⟩≡
+      f >~> id~>                                                       ≡⟨ cong (λ x → f >~> x) (sym post-invert) ⟩
+      f >~> (s >~> r)                                                   ⟨ law->~> _ _ _ ⟩≡
+      f >~> s >~> r                                                    ≡⟨ whiskerʳ post ⟩
+      g >~> s >~> r                                                    ≡⟨ law->~> _ _ _ ⟩
+      g >~> (s >~> r)                                                  ≡⟨ cong (λ x → g >~> x) post-invert ⟩
+      g >~> id~>                                                       ≡⟨ law-id~>ʳ _ ⟩
       g
       □
     where open Split-Monic m
@@ -592,13 +596,13 @@ module Split-Monic-Epic {C : Category} where
 
   split-epic : {A B : Obj} {r : A ~> B} → Split-Epic r → Epic r
   split-epic {A} {B} {r} m {f = f} {g = g} pre =
-      f                         ⟨ law-id~>ˡ _ ⟩≡
-      id~> >~> f               ≡⟨ cong (λ x → x >~> f) (sym pre-invert) ⟩
-      s >~> r >~> f            ≡⟨ law->~> _ _ _ ⟩
-      s >~> (r >~> f)          ≡⟨ whiskerˡ pre ⟩
-      s >~> (r >~> g)           ⟨ law->~> _ _ _ ⟩≡
-      s >~> r >~> g            ≡⟨ cong (λ x → x >~> g) pre-invert ⟩
-      id~> >~> g               ≡⟨ law-id~>ˡ _ ⟩
+      f                                                                 ⟨ law-id~>ˡ _ ⟩≡
+      id~> >~> f                                                       ≡⟨ cong (λ x → x >~> f) (sym pre-invert) ⟩
+      s >~> r >~> f                                                    ≡⟨ law->~> _ _ _ ⟩
+      s >~> (r >~> f)                                                  ≡⟨ whiskerˡ pre ⟩
+      s >~> (r >~> g)                                                   ⟨ law->~> _ _ _ ⟩≡
+      s >~> r >~> g                                                    ≡⟨ cong (λ x → x >~> g) pre-invert ⟩
+      id~> >~> g                                                       ≡⟨ law-id~>ˡ _ ⟩
       g
       □
     where open Split-Epic m
@@ -610,26 +614,26 @@ module Functor-Split-Monic-Epic {C D : Category} (F : C => D)where
   open _=>_ F
 
   F-split-monic : {A B : Obj C} {s : _~>_ C A B} →
-                  Split-Monic {C} s →
-                  Split-Monic {D} (𝔽₁ s)
+                  Split-Monic C s →
+                  Split-Monic D (𝔽₁ s)
   F-split-monic {A} {B} {s} m =
     record { r = 𝔽₁ r
-           ; post-invert =  _>~>_ D (𝔽₁ s) (𝔽₁ r)     ⟨ F-map->~> s r ⟩≡
-                            𝔽₁ (_>~>_ C s r)         ≡⟨ cong (λ x → 𝔽₁ x) post-invert ⟩
-                            𝔽₁ (id~> C)              ≡⟨ F-map-id~> ⟩
+           ; post-invert =  _>~>_ D (𝔽₁ s) (𝔽₁ r)                       ⟨ F-map->~> s r ⟩≡
+                            𝔽₁ (_>~>_ C s r)                           ≡⟨ cong (λ x → 𝔽₁ x) post-invert ⟩
+                            𝔽₁ (id~> C)                                ≡⟨ F-map-id~> ⟩
                             id~> D
                             □
            }
     where open Split-Monic m
 
   F-split-epic : {A B : Obj C} {r : _~>_ C A B} →
-                  Split-Epic {C} r →
-                  Split-Epic {D} (𝔽₁ r)
+                  Split-Epic C r →
+                  Split-Epic D (𝔽₁ r)
   F-split-epic {A} {B} {r} m =
     record { s = 𝔽₁ s
-           ; pre-invert =  _>~>_ D (𝔽₁ s) (𝔽₁ r)     ⟨ F-map->~> s r ⟩≡
-                            𝔽₁ (_>~>_ C s r)         ≡⟨ cong (λ x → 𝔽₁ x) pre-invert ⟩
-                            𝔽₁ (id~> C)              ≡⟨ F-map-id~> ⟩
+           ; pre-invert =  _>~>_ D (𝔽₁ s) (𝔽₁ r)                        ⟨ F-map->~> s r ⟩≡
+                            𝔽₁ (_>~>_ C s r)                           ≡⟨ cong (λ x → 𝔽₁ x) pre-invert ⟩
+                            𝔽₁ (id~> C)                                ≡⟨ F-map-id~> ⟩
                             id~> D
                             □
            }
@@ -641,7 +645,7 @@ module Functor-Split-Monic-Epic {C D : Category} (F : C => D)where
 ----------------------------------------------------------------------------
 
 
-module Iso {C : Category} where
+module Iso (C : Category) where
   open Category C
 
   record have-section {A B : Obj} (r : B ~> A) : Set where
@@ -659,11 +663,11 @@ module Iso {C : Category} where
                have-section.s s ≡ have-retraction.r r
   sec≡retrac {f = f} {record { s = s ; section = section }}
                      {record { r = r ; retraction = retraction }} =
-             s                ⟨ law-id~>ʳ _ ⟩≡
-             s >~> id~>       ⟨ whiskerˡ retraction ⟩≡
-             s >~> (f >~> r)  ⟨ law->~> _ _ _ ⟩≡
-             s >~> f >~> r   ≡⟨ whiskerʳ section ⟩
-             id~> >~> r      ≡⟨ law-id~>ˡ _ ⟩
+             s                                                          ⟨ law-id~>ʳ _ ⟩≡
+             s >~> id~>                                                 ⟨ whiskerˡ retraction ⟩≡
+             s >~> (f >~> r)                                            ⟨ law->~> _ _ _ ⟩≡
+             s >~> f >~> r                                             ≡⟨ whiskerʳ section ⟩
+             id~> >~> r                                                ≡⟨ law-id~>ˡ _ ⟩
              r
              □
 
@@ -690,22 +694,23 @@ module Iso {C : Category} where
   iso-trans record { f = f₁ ; iso-witness = record { fʳ = fʳ₁ ; inverse = inverse₁ ; inverseʳ = inverseʳ₁ } }
             record { f = f₂ ; iso-witness = record { fʳ = fʳ₂ ; inverse = inverse₂ ; inverseʳ = inverseʳ₂ } } =
      record { f = f₁ >~> f₂
-            ; iso-witness = record { fʳ = fʳ₂ >~> fʳ₁
-                                   ; inverse = f₁ >~> f₂ >~> (fʳ₂ >~> fʳ₁)   ≡⟨ law->~> _ _ _ ⟩
-                                               f₁ >~> (f₂ >~> (fʳ₂ >~> fʳ₁)) ≡⟨ whiskerˡ (sym (law->~> _ _ _)) ⟩
-                                               f₁ >~> (f₂ >~> fʳ₂ >~> fʳ₁)   ≡⟨ cong (λ x → f₁ >~> (x >~> fʳ₁)) inverse₂ ⟩
-                                               f₁ >~> (id~> >~> fʳ₁)         ≡⟨ whiskerˡ (law-id~>ˡ _) ⟩
-                                               f₁ >~> fʳ₁                    ≡⟨ inverse₁ ⟩
-                                               id~>
-                                               □
-                                   ; inverseʳ = fʳ₂ >~> fʳ₁ >~> (f₁ >~> f₂)    ≡⟨ law->~> _ _ _ ⟩
-                                                fʳ₂ >~> (fʳ₁ >~> (f₁ >~> f₂))  ≡⟨ whiskerˡ (sym (law->~> _ _ _)) ⟩
-                                                fʳ₂ >~> (fʳ₁ >~> f₁ >~> f₂)    ≡⟨ cong (λ x → fʳ₂ >~> (x >~> f₂)) inverseʳ₁ ⟩
-                                                fʳ₂ >~> (id~> >~> f₂)          ≡⟨ whiskerˡ (law-id~>ˡ _) ⟩
-                                                fʳ₂ >~> f₂                     ≡⟨ inverseʳ₂ ⟩
-                                                id~>
-                                                □
-                                   }
+            ; iso-witness =
+                record { fʳ = fʳ₂ >~> fʳ₁
+                       ; inverse = f₁ >~> f₂ >~> (fʳ₂ >~> fʳ₁)         ≡⟨ law->~> _ _ _ ⟩
+                                   f₁ >~> (f₂ >~> (fʳ₂ >~> fʳ₁))       ≡⟨ whiskerˡ (sym (law->~> _ _ _)) ⟩
+                                   f₁ >~> (f₂ >~> fʳ₂ >~> fʳ₁)         ≡⟨ cong (λ x → f₁ >~> (x >~> fʳ₁)) inverse₂ ⟩
+                                   f₁ >~> (id~> >~> fʳ₁)               ≡⟨ whiskerˡ (law-id~>ˡ _) ⟩
+                                   f₁ >~> fʳ₁                          ≡⟨ inverse₁ ⟩
+                                   id~>
+                                   □
+                       ; inverseʳ = fʳ₂ >~> fʳ₁ >~> (f₁ >~> f₂)        ≡⟨ law->~> _ _ _ ⟩
+                                    fʳ₂ >~> (fʳ₁ >~> (f₁ >~> f₂))      ≡⟨ whiskerˡ (sym (law->~> _ _ _)) ⟩
+                                    fʳ₂ >~> (fʳ₁ >~> f₁ >~> f₂)        ≡⟨ cong (λ x → fʳ₂ >~> (x >~> f₂)) inverseʳ₁ ⟩
+                                    fʳ₂ >~> (id~> >~> f₂)              ≡⟨ whiskerˡ (law-id~>ˡ _) ⟩
+                                    fʳ₂ >~> f₂                         ≡⟨ inverseʳ₂ ⟩
+                                    id~>
+                                    □
+                       }
             }
 
 
@@ -723,23 +728,23 @@ record Terminal (C : Category): Set where
 
   -- identity expansion for terminals
   ⊤-id : (f : 𝟙 ~> 𝟙) → f ≡ id~>
-  ⊤-id f = f    ≡⟨ !-unique f ⟩
-           !     ⟨ !-unique id~> ⟩≡
+  ⊤-id f = f                                                           ≡⟨ !-unique f ⟩
+           !                                                            ⟨ !-unique id~> ⟩≡
            id~>
            □
 
-module terminals-up-to-iso {C : Category} {T R : Terminal C} where
+module terminals-up-to-iso {C : Category} (T R : Terminal C) where
 
   open Category C
   open Terminal
-  open Iso {C}
+  open Iso C
 
   up-to-iso : (𝟙 T) ≅ (𝟙 R)
   up-to-iso = record { f = ! R  ; iso-witness = record { fʳ = ! T ; inverse = ⊤-id T _ ; inverseʳ = ⊤-id R _ } }
 
 
 
-module pre-composing-with-bang {C : Category} {T : Terminal C} where
+module pre-composing-with-bang {C : Category} (T : Terminal C) where
   open Category C
   open Terminal
 
@@ -777,23 +782,23 @@ record Initial (C : Category): Set where
 
   -- identity expansion for initials
   ⊥-id : (f : 𝟘 ~> 𝟘) → f ≡ id~>
-  ⊥-id f = f    ≡⟨ !-unique f ⟩
-           !     ⟨ !-unique id~> ⟩≡
+  ⊥-id f = f                                                           ≡⟨ !-unique f ⟩
+           !                                                            ⟨ !-unique id~> ⟩≡
            id~>
            □
 
-module initials-up-to-iso {C : Category} {T R : Initial C} where
+module initials-up-to-iso {C : Category} (T R : Initial C) where
 
   open Category C
   open Initial
-  open Iso {C}
+  open Iso C
 
   up-to-iso : (𝟘 T) ≅ (𝟘 R)
   up-to-iso = record { f = ! T ; iso-witness = record { fʳ = ! R ; inverse = ⊥-id T _ ; inverseʳ = ⊥-id R _ } }
 
 
 
-module post-composing-with-bang {C : Category} {T : Initial C} where
+module post-composing-with-bang {C : Category} (T : Initial C) where
   open Category C
   open Initial
 
