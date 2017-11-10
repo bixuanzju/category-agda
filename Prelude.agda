@@ -69,6 +69,9 @@ record Subset (A : Set) (P : A → Set) : Set where
     elem   : A
     .proof : P elem
 
+open Subset public
+
+
 _×_ : Set -> Set -> Set
 S × T = Σ S \ _ -> T
 
@@ -135,6 +138,10 @@ _ ⟨ refl ⟩≡ q = q
 
 infixr 1 _≡⟨_⟩_ _⟨_⟩≡_
 infixr 2 _□
+
+
+proof-irr : ∀ {A P} {f g : Subset A P} → elem f ≡ elem g → f ≡ g
+proof-irr {f = f₁ # prf₁} {f₂ # prf₂} prf rewrite prf = refl
 
 
 ------------------------------------------------------------------------------
