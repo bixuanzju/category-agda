@@ -808,14 +808,14 @@ record Terminal (C : Category): Set where
    ≡⟨ sym (!-unique id~>) ⟩
     id~> □
 
-module terminals-up-to-iso {C : Category} (T R : Terminal C) where
+module terminals-up-to-iso (C : Category)  where
 
   open Category C
   open Terminal
   open Iso C
 
-  up-to-iso : (𝟙 T) ≅ (𝟙 R)
-  up-to-iso = record { f = ! R  ; iso-witness = record { fʳ = ! T ; inverse = ⊤-id T _ ; inverseʳ = ⊤-id R _ } }
+  up-to-iso : (T R : Terminal C) → (𝟙 T) ≅ (𝟙 R)
+  up-to-iso T R = record { f = ! R  ; iso-witness = record { fʳ = ! T ; inverse = ⊤-id T _ ; inverseʳ = ⊤-id R _ } }
 
 
 
@@ -864,14 +864,14 @@ record Initial (C : Category): Set where
    ≡⟨ sym (!-unique id~>) ⟩
     id~> □
 
-module initials-up-to-iso {C : Category} (T R : Initial C) where
+module initials-up-to-iso (C : Category) where
 
   open Category C
   open Initial
   open Iso C
 
-  up-to-iso : (𝟘 T) ≅ (𝟘 R)
-  up-to-iso = record { f = ! T ; iso-witness = record { fʳ = ! R ; inverse = ⊥-id T _ ; inverseʳ = ⊥-id R _ } }
+  up-to-iso : (T R : Initial C) → (𝟘 T) ≅ (𝟘 R)
+  up-to-iso T R = record { f = ! T ; iso-witness = record { fʳ = ! R ; inverse = ⊥-id T _ ; inverseʳ = ⊥-id R _ } }
 
 
 
@@ -901,3 +901,91 @@ record Decreasing-Preorder {X} (p : Preorder X) : Set where
 Initial-Preorder : ∀ {X} → {{p : Preorder X}} (MP : Decreasing-Preorder p) → Initial (PREORDER {{p}})
 Initial-Preorder MP = record { 𝟘 = e MP ; ! = λ {x} → ≤-e MP x ; !-unique = λ {x} _ → ≤-unique _ x _ _ }
   where open Decreasing-Preorder
+
+
+----------------------------------------------------------------------------
+-- Products
+----------------------------------------------------------------------------
+
+
+record Product {C : Category} (A B : Category.Obj C) : Set where
+  open Category C
+  field
+    A×B : Obj
+    π₀ : A×B ~> A
+    π₁ : A×B ~> B
+    ⟨_,_⟩ : ∀ {C} → (C ~> A) → (C ~> B) → (C ~> A×B)
+
+    commute₁ : ∀ {X} {f : X ~> A} {g : X ~> B} → ⟨ f , g ⟩ >~> π₀ ≡ f
+    commute₂ : ∀ {X} {f : X ~> A} {g : X ~> B} → ⟨ f , g ⟩ >~> π₁ ≡ g
+    universal : ∀ {X} {f : X ~> A} {g : X ~> B} {t : X ~> A×B} →
+                   t >~> π₀ ≡ f → t >~> π₁ ≡ g → ⟨ f , g ⟩ ≡ t
+
+  π-id : ⟨ π₀ , π₁ ⟩ ≡ id~>
+  π-id = universal (law-id~>ˡ _) (law-id~>ˡ _)
+
+
+
+module products-up-to-iso (C : Category) where
+  open Category C
+  open Iso C
+
+  up-to-iso : ∀ {A B} → (P Q : Product {C} A B) → Product.A×B P ≅ Product.A×B Q
+  up-to-iso P Q = record { f = s
+                         ; iso-witness = record { fʳ = t
+                                                ; inverse = begin
+                                                    s >~> t
+                                                   ≡⟨ sym (Product.universal P lemmaP₁ lemmaP₂) ⟩
+                                                    Product.⟨_,_⟩ P p₀ p₁
+                                                   ≡⟨ Product.π-id P ⟩
+                                                    id~> □
+                                                ; inverseʳ = begin
+                                                    t >~> s
+                                                   ≡⟨ sym (Product.universal Q lemmaQ₁ lemmaQ₂) ⟩
+                                                    Product.⟨_,_⟩ Q q₀ q₁
+                                                   ≡⟨ Product.π-id Q ⟩
+                                                    id~> □
+                                                }
+                         }
+    where p₀ = Product.π₀ P
+          p₁ = Product.π₁ P
+          q₀ = Product.π₀ Q
+          q₁ = Product.π₁ Q
+          s = Product.⟨_,_⟩ Q p₀ p₁
+          t = Product.⟨_,_⟩ P q₀ q₁
+          lemmaP₁ : s >~> t >~> p₀ ≡ p₀
+          lemmaP₁ = begin
+            s >~> t >~> p₀
+           ≡⟨ law->~> _ _ _ ⟩
+            s >~> (t >~> p₀)
+           ≡⟨ whiskerˡ (Product.commute₁ P) ⟩
+            s >~> q₀
+           ≡⟨ Product.commute₁ Q ⟩
+            p₀ □
+          lemmaP₂ : s >~> t >~> p₁ ≡ p₁
+          lemmaP₂ = begin
+            s >~> t >~> p₁
+           ≡⟨ law->~> _ _ _ ⟩
+            s >~> (t >~> p₁)
+           ≡⟨ whiskerˡ (Product.commute₂ P) ⟩
+            s >~> q₁
+           ≡⟨ Product.commute₂ Q ⟩
+            p₁ □
+          lemmaQ₁ : t >~> s >~> q₀ ≡ q₀
+          lemmaQ₁ = begin
+            t >~> s >~> q₀
+           ≡⟨ law->~> _ _ _ ⟩
+            t >~> (s >~> q₀)
+           ≡⟨ whiskerˡ (Product.commute₁ Q) ⟩
+            t >~> p₀
+           ≡⟨ Product.commute₁ P ⟩
+            q₀ □
+          lemmaQ₂ : t >~> s >~> q₁ ≡ q₁
+          lemmaQ₂ = begin
+            t >~> s >~> q₁
+           ≡⟨ law->~> _ _ _ ⟩
+            t >~> (s >~> q₁)
+           ≡⟨ whiskerˡ (Product.commute₂ Q) ⟩
+            t >~> p₁
+           ≡⟨ Product.commute₂ P ⟩
+            q₁ □
