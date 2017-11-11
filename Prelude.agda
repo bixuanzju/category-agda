@@ -126,18 +126,18 @@ subst refl P x = x
 cong : ∀ {X : Set}{Y : Set}(f : X → Y){x y} → x ≡ y → f x ≡ f y
 cong f refl = refl
 
+begin_ : {X : Set} {x y : X} → x ≡ y → x ≡ y
+begin_ x≡y = x≡y
+
 _□ : {X : Set} (x : X) → x ≡ x
 x □ = refl
 
 _≡⟨_⟩_  : ∀ {X : Set} (x : X) {y z} → x ≡ y → y ≡ z → x ≡ z
 _ ≡⟨ refl ⟩ q = q
 
-_⟨_⟩≡_ : ∀ {X : Set} (x : X) {y z} → y ≡ x → y ≡ z → x ≡ z
-_ ⟨ refl ⟩≡ q = q
-
-
-infixr 1 _≡⟨_⟩_ _⟨_⟩≡_
-infixr 2 _□
+infixr 2 _≡⟨_⟩_
+infix 3 _□
+infix  1 begin_
 
 
 proof-irr : ∀ {A P} {f g : Subset A P} → elem f ≡ elem g → f ≡ g
