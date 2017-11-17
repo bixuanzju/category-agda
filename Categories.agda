@@ -214,18 +214,19 @@ CAT-MONOID  = record
 ----------------------------------------------------------------------------
 
 module FUNCTOR where
-  open Category
   -- Functor from C to D
   record _=>_ (C D : Category) : Set where
+    module C = Category C
+    module D = Category D
     field
       -- Two mappings
-      𝔽₀ : Obj C → Obj D
-      𝔽₁ : {S T : Obj C} → _~>_ C S T → _~>_ D (𝔽₀ S) (𝔽₀ T)
+      𝔽₀ : C.Obj → D.Obj
+      𝔽₁ : {S T : C.Obj} → S C.~> T → (𝔽₀ S) D.~> (𝔽₀ T)
 
       -- Two laws
-      F-map-id~> : {T : Obj C} → 𝔽₁ (id~> C {T}) ≡ id~> D {𝔽₀ T}
-      F-map->~> : {R S T : Obj C} (f : _~>_ C R S) (g : _~>_ C S T) →
-                  𝔽₁ (_>~>_ C f g) ≡ _>~>_ D (𝔽₁ f) (𝔽₁ g)
+      F-map-id~> : {T : C.Obj} → 𝔽₁ C.id~> ≡ D.id~> {𝔽₀ T}
+      F-map->~> : {R S T : C.Obj} (f : R C.~> S) (g : S C.~> T) →
+                  𝔽₁ (f C.>~> g) ≡ (𝔽₁ f) D.>~> (𝔽₁ g)
 
 open FUNCTOR public
 
@@ -273,9 +274,9 @@ Functor≡ {C} {D}
        λ { refl  → -- Patterns lambdas
          Σ (_≡_ {∀ {S T : Category.Obj C} → (C Category.~> S) T → (D Category.~> 𝔽₀ S) (𝔾₀ T)} 𝔽₁ 𝔾₁)
             λ { refl →
-                _≡_ {forall {T : Category.Obj C} → 𝔽₁ (Category.id~> C {T}) ≡ Category.id~> D} F-map-id~> G-map-id~>
+                _≡_ {∀ {T : Category.Obj C} → 𝔽₁ (Category.id~> C {T}) ≡ Category.id~> D} F-map-id~> G-map-id~>
                 ×
-                _≡_ {forall {R S T : Category.Obj C} (f : (C Category.~> R) S) (g : (C Category.~> S) T) →
+                _≡_ {∀ {R S T : Category.Obj C} (f : (C Category.~> R) S) (g : (C Category.~> S) T) →
                      𝔽₁ ((C Category.>~> f) g) ≡ (D Category.>~> 𝔽₁ f) (𝔽₁ g)}
                      F-map->~>  G-map->~>
               }
@@ -340,6 +341,40 @@ open Rep public
 ----------------------------------------------------------------------------
 -- New categories from old
 ----------------------------------------------------------------------------
+
+
+-- Ordered pair categories
+
+Prod : Category → Category → Category
+Prod C D = record
+             { Obj = C.Obj × D.Obj
+             ; _~>_ = λ x y → (fst x C.~> fst y) × (snd x D.~> snd y)
+             ; id~> = C.id~> , D.id~>
+             ; _>~>_ = λ { (f , p) (g , q) → C._>~>_ f g , D._>~>_ p q }
+             ; law-id~>ˡ = λ f → begin
+                 (C.id~> C.>~> fst f) , (D.id~> D.>~> snd f)
+                ≡⟨ cong (λ x → x , (D.id~> D.>~> snd f)) (C.law-id~>ˡ _) ⟩
+                 fst f , (D.id~> D.>~> snd f)
+                ≡⟨ cong (λ x → fst f , x) (D.law-id~>ˡ _) ⟩
+                 f □
+             ; law-id~>ʳ = λ f → begin
+                  (fst f C.>~> C.id~>) , (snd f D.>~> D.id~>)
+                 ≡⟨ cong (λ x → x , (snd f D.>~> D.id~>)) (C.law-id~>ʳ _) ⟩
+                  fst f , (snd f D.>~> D.id~>)
+                 ≡⟨ cong (λ x → fst f , x) (D.law-id~>ʳ _) ⟩
+                  f □
+             ; law->~> = λ f g h → begin
+                  (fst f C.>~> fst g C.>~> fst h) , (snd f D.>~> snd g D.>~> snd h)
+                 ≡⟨ cong (λ x → x , (snd f D.>~> snd g D.>~> snd h)) (C.law->~> _ _ _) ⟩
+                  (fst f C.>~> (fst g C.>~> fst h)) , (snd f D.>~> snd g D.>~> snd h)
+                 ≡⟨ cong (λ x → (fst f C.>~> (fst g C.>~> fst h)) , x) (D.law->~> _ _ _) ⟩
+                  (fst f C.>~> (fst g C.>~> fst h)) , (snd f D.>~> (snd g D.>~> snd h)) □
+             }
+  where module C = Category C
+        module D = Category D
+
+
+
 
 -- Opposite categories
 _op : Category → Category
@@ -907,30 +942,49 @@ Initial-Preorder MP = record { 𝟘 = e MP ; ! = λ {x} → ≤-e MP x ; !-uniqu
 -- Products
 ----------------------------------------------------------------------------
 
-
-record Product {C : Category} (A B : Category.Obj C) : Set where
-  open Category C
-  field
-    A×B : Obj
-    π₀ : A×B ~> A
-    π₁ : A×B ~> B
-    ⟨_,_⟩ : ∀ {C} → (C ~> A) → (C ~> B) → (C ~> A×B)
-
-    commute₁ : ∀ {X} {f : X ~> A} {g : X ~> B} → ⟨ f , g ⟩ >~> π₀ ≡ f
-    commute₂ : ∀ {X} {f : X ~> A} {g : X ~> B} → ⟨ f , g ⟩ >~> π₁ ≡ g
-    universal : ∀ {X} {f : X ~> A} {g : X ~> B} {t : X ~> A×B} →
-                   t >~> π₀ ≡ f → t >~> π₁ ≡ g → ⟨ f , g ⟩ ≡ t
-
-  π-id : ⟨ π₀ , π₁ ⟩ ≡ id~>
-  π-id = universal (law-id~>ˡ _) (law-id~>ˡ _)
-
-
-
-module products-up-to-iso (C : Category) where
+module PRODUCT (C : Category) where
   open Category C
   open Iso C
 
-  up-to-iso : ∀ {A B} → (P Q : Product {C} A B) → Product.A×B P ≅ Product.A×B Q
+  record Product (A B : Obj) : Set where
+    field
+      A×B : Obj
+      π₀ : A×B ~> A
+      π₁ : A×B ~> B
+      ⟨_,_⟩ : ∀ {C} → (C ~> A) → (C ~> B) → (C ~> A×B)
+
+      commute₁ : ∀ {X} {f : X ~> A} {g : X ~> B} → ⟨ f , g ⟩ >~> π₀ ≡ f
+      commute₂ : ∀ {X} {f : X ~> A} {g : X ~> B} → ⟨ f , g ⟩ >~> π₁ ≡ g
+      universal : ∀ {X} {f : X ~> A} {g : X ~> B} {t : X ~> A×B} →
+                     t >~> π₀ ≡ f → t >~> π₁ ≡ g → ⟨ f , g ⟩ ≡ t
+
+    π-id : ⟨ π₀ , π₁ ⟩ ≡ id~>
+    π-id = universal (law-id~>ˡ _) (law-id~>ˡ _)
+
+    π-η : ∀ {C} → {f : C ~> A×B} → ⟨ f >~> π₀ , f >~> π₁ ⟩ ≡ f
+    π-η = universal refl refl
+
+    pre-composing-with-tuple : {X Y : Obj} (i : Y ~> X) (f : X ~> A) (g : X ~> B) →
+                               i >~> ⟨ f , g ⟩ ≡ ⟨ i >~> f , i >~> g ⟩
+    pre-composing-with-tuple i f g = sym (universal help₁ help₂)
+      where
+        help₁ : i >~> ⟨ f , g ⟩ >~> π₀ ≡ i >~> f
+        help₁ = begin
+          i >~> ⟨ f , g ⟩ >~> π₀
+         ≡⟨ law->~> _ _ _ ⟩
+          i >~> (⟨ f , g ⟩ >~> π₀)
+         ≡⟨ whiskerˡ commute₁ ⟩
+          i >~> f □
+        help₂ : i >~> ⟨ f , g ⟩ >~> π₁ ≡ i >~> g
+        help₂ = begin
+          i >~> ⟨ f , g ⟩ >~> π₁
+         ≡⟨ law->~> _ _ _ ⟩
+          i >~> (⟨ f , g ⟩ >~> π₁)
+         ≡⟨ whiskerˡ commute₂ ⟩
+          i >~> g □
+
+
+  up-to-iso : ∀ {A B} → (P Q : Product A B) → Product.A×B P ≅ Product.A×B Q
   up-to-iso P Q = record { f = s
                          ; iso-witness = record { fʳ = t
                                                 ; inverse = begin
@@ -989,3 +1043,57 @@ module products-up-to-iso (C : Category) where
             t >~> p₁
            ≡⟨ Product.commute₂ P ⟩
             q₁ □
+
+
+  arrow-product : ∀ {X Y A B} {P : Product X Y} {Q : Product A B} → (f : X ~> A) (g : Y ~> B) → Product.A×B P ~> Product.A×B Q
+  arrow-product {P = P} {Q = Q} f g = Q.⟨ (P.π₀ >~> f) , (P.π₁ >~> g) ⟩
+    where module P = Product P
+          module Q = Product Q
+
+
+  -×- : (p : (A B : Obj) → Product A B) → Prod C C => C
+  -×- p = record { 𝔽₀ = λ {(a , b) → Product.A×B (p a b)}
+                 ; 𝔽₁ = λ {(f , g) → arrow-product {P = p _ _} {Q = p _ _} f g}
+                 ; F-map-id~> = λ { {A₀ , A₁} →
+                     let open module A₀×A₁ = Product (p A₀ A₁)
+                     in begin
+                        ⟨ π₀ >~> id~> , π₁ >~> id~> ⟩
+                       ≡⟨ cong (λ x → ⟨ x , π₁ >~> id~> ⟩) (law-id~>ʳ _) ⟩
+                        ⟨ π₀ , π₁ >~> id~> ⟩
+                       ≡⟨ cong (λ x → ⟨ π₀ , x ⟩) (law-id~>ʳ _) ⟩
+                        ⟨ π₀ , π₁ ⟩
+                       ≡⟨ π-id ⟩
+                        id~> □
+                   }
+                 ; F-map->~> = λ { {A₀ , A₁} {B₀ , B₁} {C₀ , C₁} (f₀ , f₁) (g₀ , g₁) →
+                     let module A₀×A₁ = Product (p A₀ A₁)
+                         module B₀×B₁ = Product (p B₀ B₁)
+                         module C₀×C₁ = Product (p C₀ C₁)
+                         f₀×f₁ = arrow-product {P = p A₀ A₁} {Q = p B₀ B₁} f₀ f₁
+                         g₀×g₁ = arrow-product {P = p B₀ B₁} {Q = p C₀ C₁} g₀ g₁
+                     in begin
+                        C₀×C₁.⟨ A₀×A₁.π₀ >~> (f₀ >~> g₀) , A₀×A₁.π₁ >~> (f₁ >~> g₁) ⟩
+                       ≡⟨ cong (λ x → C₀×C₁.⟨ x , A₀×A₁.π₁ >~> (f₁ >~> g₁) ⟩) (sym (law->~> _ _ _)) ⟩
+                        C₀×C₁.⟨ A₀×A₁.π₀ >~> f₀ >~> g₀ , A₀×A₁.π₁ >~> (f₁ >~> g₁) ⟩
+                       ≡⟨ cong (λ x → C₀×C₁.⟨ A₀×A₁.π₀ >~> f₀ >~> g₀ , x ⟩) (sym (law->~> _ _ _)) ⟩
+                        C₀×C₁.⟨ A₀×A₁.π₀ >~> f₀ >~> g₀ , A₀×A₁.π₁ >~> f₁ >~> g₁ ⟩
+                       ≡⟨ cong (λ x → C₀×C₁.⟨ x >~> g₀ , A₀×A₁.π₁ >~> f₁ >~> g₁ ⟩) (sym B₀×B₁.commute₁) ⟩
+                        C₀×C₁.⟨ f₀×f₁ >~> B₀×B₁.π₀ >~> g₀ , A₀×A₁.π₁ >~> f₁ >~> g₁ ⟩
+                       ≡⟨ cong (λ x → C₀×C₁.⟨ f₀×f₁ >~> B₀×B₁.π₀ >~> g₀ , x >~> g₁ ⟩) (sym B₀×B₁.commute₂) ⟩
+                        C₀×C₁.⟨ f₀×f₁ >~> B₀×B₁.π₀ >~> g₀ , f₀×f₁ >~> B₀×B₁.π₁ >~> g₁ ⟩
+                       ≡⟨ cong (λ x → C₀×C₁.⟨ x , f₀×f₁ >~> B₀×B₁.π₁ >~> g₁ ⟩) (law->~> _ _ _) ⟩
+                        C₀×C₁.⟨ f₀×f₁ >~> (B₀×B₁.π₀ >~> g₀) , f₀×f₁ >~> B₀×B₁.π₁ >~> g₁ ⟩
+                       ≡⟨ cong (λ x → C₀×C₁.⟨ f₀×f₁ >~> (B₀×B₁.π₀ >~> g₀) , x ⟩) (law->~> _ _ _) ⟩
+                        C₀×C₁.⟨ f₀×f₁ >~> (B₀×B₁.π₀ >~> g₀) , f₀×f₁ >~> (B₀×B₁.π₁ >~> g₁) ⟩
+                       ≡⟨ cong (λ x → C₀×C₁.⟨ f₀×f₁ >~> x , f₀×f₁ >~> (B₀×B₁.π₁ >~> g₁) ⟩) (sym C₀×C₁.commute₁) ⟩
+                        C₀×C₁.⟨ f₀×f₁ >~> (g₀×g₁ >~> C₀×C₁.π₀) , f₀×f₁ >~> (B₀×B₁.π₁ >~> g₁) ⟩
+                       ≡⟨ cong (λ x → C₀×C₁.⟨ f₀×f₁ >~> (g₀×g₁ >~> C₀×C₁.π₀) , f₀×f₁ >~> x ⟩) (sym C₀×C₁.commute₂) ⟩
+                        C₀×C₁.⟨ f₀×f₁ >~> (g₀×g₁ >~> C₀×C₁.π₀) , f₀×f₁ >~> (g₀×g₁ >~> C₀×C₁.π₁) ⟩
+                       ≡⟨ cong (λ x → C₀×C₁.⟨ x , f₀×f₁ >~> (g₀×g₁ >~> C₀×C₁.π₁) ⟩) (sym (law->~> _ _ _)) ⟩
+                        C₀×C₁.⟨ f₀×f₁ >~> g₀×g₁ >~> C₀×C₁.π₀ , f₀×f₁ >~> (g₀×g₁ >~> C₀×C₁.π₁) ⟩
+                       ≡⟨ cong (λ x → C₀×C₁.⟨ f₀×f₁ >~> g₀×g₁ >~> C₀×C₁.π₀ , x ⟩) (sym (law->~> _ _ _)) ⟩
+                        C₀×C₁.⟨ f₀×f₁ >~> g₀×g₁ >~> C₀×C₁.π₀ , f₀×f₁ >~> g₀×g₁ >~> C₀×C₁.π₁ ⟩
+                       ≡⟨ C₀×C₁.π-η ⟩
+                        f₀×f₁ >~> g₀×g₁ □
+                   }
+                 }
