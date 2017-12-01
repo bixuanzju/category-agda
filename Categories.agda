@@ -1098,9 +1098,9 @@ module PRODUCT (C : Category) where
                    }
                  }
 
-  post-composing-arrow-product : ∀ {X A₀ A₁ B₀ B₁} → (P : Product A₀ A₁) → (Q : Product B₀ B₁) →
-                                 (f₀ : X ~> A₀) → (f₁ : X ~> A₁) →
-                                 (g₀ : A₀ ~> B₀) → (g₁ : A₁ ~> B₁) →
+  post-composing-arrow-product : ∀ {X A₀ A₁ B₀ B₁} (P : Product A₀ A₁) (Q : Product B₀ B₁) →
+                                 (f₀ : X ~> A₀) (f₁ : X ~> A₁) →
+                                 (g₀ : A₀ ~> B₀) (g₁ : A₁ ~> B₁) →
                                  (Product.⟨_,_⟩ P f₀ f₁) >~> (arrow-product P Q g₀ g₁) ≡ Product.⟨_,_⟩ Q (f₀ >~> g₀) (f₁ >~> g₁)
   post-composing-arrow-product P Q f₀ f₁ g₀ g₁ = begin
     P.⟨ f₀ , f₁ ⟩ >~> arrow-product P Q g₀ g₁
@@ -1125,3 +1125,70 @@ module PRODUCT (C : Category) where
 
     where module P = Product P
           module Q = Product Q
+
+
+  product-associator : ∀ {A B C} →
+                       (P₁ : Product A B) (P₂ : Product B C)
+                       (P₃ : Product A (Product.A×B P₂)) (P₄ : Product (Product.A×B P₁) C) →
+                       Product.A×B P₃ ≅ Product.A×B P₄
+  product-associator P₁ P₂ P₃ P₄ =
+    record { f = s
+           ; iso-witness =
+               record { fʳ = t
+                      ; inverse = begin
+                         s >~> t
+                        ≡⟨ P₃.pre-composing-with-tuple s (P₄.π₀ >~> P₁.π₀) (P₂.⟨ P₄.π₀ >~> P₁.π₁ , P₄.π₁ ⟩) ⟩
+                         P₃.⟨ s >~> (P₄.π₀ >~> P₁.π₀) , s >~> P₂.⟨ P₄.π₀ >~> P₁.π₁ , P₄.π₁ ⟩ ⟩
+                        ≡⟨ cong (λ x → P₃.⟨ s >~> (P₄.π₀ >~> P₁.π₀) , x ⟩) (P₂.pre-composing-with-tuple s (P₄.π₀ >~> P₁.π₁) P₄.π₁) ⟩
+                         P₃.⟨ s >~> (P₄.π₀ >~> P₁.π₀) , P₂.⟨ s >~> (P₄.π₀ >~> P₁.π₁) , s >~> P₄.π₁ ⟩ ⟩
+                        ≡⟨ cong (λ x → P₃.⟨ x , P₂.⟨ s >~> (P₄.π₀ >~> P₁.π₁) , s >~> P₄.π₁ ⟩ ⟩) (sym (law->~> _ _ _)) ⟩
+                         P₃.⟨ s >~> P₄.π₀ >~> P₁.π₀ , P₂.⟨ s >~> (P₄.π₀ >~> P₁.π₁) , s >~> P₄.π₁ ⟩ ⟩
+                        ≡⟨ cong (λ x → P₃.⟨ s >~> P₄.π₀ >~> P₁.π₀ , P₂.⟨ x , s >~> P₄.π₁ ⟩ ⟩) (sym (law->~> _ _ _)) ⟩
+                         P₃.⟨ s >~> P₄.π₀ >~> P₁.π₀ , P₂.⟨ s >~> P₄.π₀ >~> P₁.π₁ , s >~> P₄.π₁ ⟩ ⟩
+                        ≡⟨ cong (λ x → P₃.⟨ x >~> P₁.π₀ , P₂.⟨ s >~> P₄.π₀ >~> P₁.π₁ , s >~> P₄.π₁ ⟩ ⟩) P₄.commute₁ ⟩
+                         P₃.⟨ P₁.⟨ P₃.π₀ , P₃.π₁ >~> P₂.π₀ ⟩ >~> P₁.π₀ , P₂.⟨ s >~> P₄.π₀ >~> P₁.π₁ , s >~> P₄.π₁ ⟩ ⟩
+                        ≡⟨ cong (λ x → P₃.⟨ x , P₂.⟨ s >~> P₄.π₀ >~> P₁.π₁ , s >~> P₄.π₁ ⟩ ⟩) P₁.commute₁ ⟩
+                         P₃.⟨ P₃.π₀ , P₂.⟨ s >~> P₄.π₀ >~> P₁.π₁ , s >~> P₄.π₁ ⟩ ⟩
+                        ≡⟨ cong (λ x → P₃.⟨ P₃.π₀ , P₂.⟨ x >~> P₁.π₁ , s >~> P₄.π₁ ⟩ ⟩) P₄.commute₁ ⟩
+                         P₃.⟨ P₃.π₀ , P₂.⟨ P₁.⟨ P₃.π₀ , P₃.π₁ >~> P₂.π₀ ⟩ >~> P₁.π₁ , s >~> P₄.π₁ ⟩ ⟩
+                        ≡⟨ cong (λ x → P₃.⟨ P₃.π₀ , P₂.⟨ x , s >~> P₄.π₁ ⟩ ⟩) P₁.commute₂ ⟩
+                         P₃.⟨ P₃.π₀ , P₂.⟨ P₃.π₁ >~> P₂.π₀ , s >~> P₄.π₁ ⟩ ⟩
+                        ≡⟨ cong (λ x → P₃.⟨ P₃.π₀ , P₂.⟨ P₃.π₁ >~> P₂.π₀ , x ⟩ ⟩) P₄.commute₂ ⟩
+                         P₃.⟨ P₃.π₀ , P₂.⟨ P₃.π₁ >~> P₂.π₀ , P₃.π₁ >~> P₂.π₁ ⟩ ⟩
+                        ≡⟨ cong (λ x → P₃.⟨ P₃.π₀ , x ⟩) P₂.π-η ⟩
+                         P₃.⟨ P₃.π₀ , P₃.π₁ ⟩
+                        ≡⟨ P₃.π-id ⟩
+                         id~> □
+
+                      ; inverseʳ = begin
+                         t >~> s
+                        ≡⟨ P₄.pre-composing-with-tuple t (P₁.⟨ P₃.π₀ , P₃.π₁ >~> P₂.π₀ ⟩) (P₃.π₁ >~> P₂.π₁)  ⟩
+                         P₄.⟨ t >~> P₁.⟨ P₃.π₀ , P₃.π₁ >~> P₂.π₀ ⟩ , t >~> (P₃.π₁ >~> P₂.π₁) ⟩
+                        ≡⟨ cong (λ x → P₄.⟨ x , t >~> (P₃.π₁ >~> P₂.π₁) ⟩) (P₁.pre-composing-with-tuple t P₃.π₀ (P₃.π₁ >~> P₂.π₀)) ⟩
+                         P₄.⟨ P₁.⟨ t >~> P₃.π₀ , t >~> (P₃.π₁ >~> P₂.π₀) ⟩ , t >~> (P₃.π₁ >~> P₂.π₁) ⟩
+                        ≡⟨ cong (λ x → P₄.⟨ P₁.⟨ x , t >~> (P₃.π₁ >~> P₂.π₀) ⟩ , t >~> (P₃.π₁ >~> P₂.π₁) ⟩) P₃.commute₁ ⟩
+                         P₄.⟨ P₁.⟨ P₄.π₀ >~> P₁.π₀ , t >~> (P₃.π₁ >~> P₂.π₀) ⟩ , t >~> (P₃.π₁ >~> P₂.π₁) ⟩
+                        ≡⟨ cong (λ x → P₄.⟨ P₁.⟨ P₄.π₀ >~> P₁.π₀ , x ⟩ , t >~> (P₃.π₁ >~> P₂.π₁) ⟩) (sym (law->~> _ _ _)) ⟩
+                         P₄.⟨ P₁.⟨ P₄.π₀ >~> P₁.π₀ , t >~> P₃.π₁ >~> P₂.π₀ ⟩ , t >~> (P₃.π₁ >~> P₂.π₁) ⟩
+                        ≡⟨ cong (λ x → P₄.⟨ P₁.⟨ P₄.π₀ >~> P₁.π₀ , x >~> P₂.π₀ ⟩ , t >~> (P₃.π₁ >~> P₂.π₁) ⟩) (P₃.commute₂) ⟩
+                         P₄.⟨ P₁.⟨ P₄.π₀ >~> P₁.π₀ , P₂.⟨ P₄.π₀ >~> P₁.π₁ , P₄.π₁ ⟩ >~> P₂.π₀ ⟩ , t >~> (P₃.π₁ >~> P₂.π₁) ⟩
+                        ≡⟨ cong (λ x → P₄.⟨ P₁.⟨ P₄.π₀ >~> P₁.π₀ , x ⟩ , t >~> (P₃.π₁ >~> P₂.π₁) ⟩) P₂.commute₁ ⟩
+                         P₄.⟨ P₁.⟨ P₄.π₀ >~> P₁.π₀ , P₄.π₀ >~> P₁.π₁ ⟩ , t >~> (P₃.π₁ >~> P₂.π₁) ⟩
+                        ≡⟨ cong (λ x → P₄.⟨ x , t >~> (P₃.π₁ >~> P₂.π₁) ⟩) P₁.π-η ⟩
+                         P₄.⟨ P₄.π₀ , t >~> (P₃.π₁ >~> P₂.π₁) ⟩
+                        ≡⟨ cong (λ x → P₄.⟨ P₄.π₀ , x ⟩) (sym (law->~> _ _ _)) ⟩
+                         P₄.⟨ P₄.π₀ , t >~> P₃.π₁ >~> P₂.π₁ ⟩
+                        ≡⟨ cong (λ x → P₄.⟨ P₄.π₀ , x >~> P₂.π₁ ⟩) P₃.commute₂ ⟩
+                         P₄.⟨ P₄.π₀ , P₂.⟨ P₄.π₀ >~> P₁.π₁ , P₄.π₁ ⟩ >~> P₂.π₁ ⟩
+                        ≡⟨ cong (λ x → P₄.⟨ P₄.π₀ , x ⟩) P₂.commute₂ ⟩
+                         P₄.⟨ P₄.π₀ , P₄.π₁ ⟩
+                        ≡⟨ P₄.π-id ⟩
+                         id~> □
+                       }
+           }
+    where module P₁ = Product P₁
+          module P₂ = Product P₂
+          module P₃ = Product P₃
+          module P₄ = Product P₄
+          s = P₄.⟨ P₁.⟨ P₃.π₀ , P₃.π₁ >~> P₂.π₀ ⟩ , P₃.π₁ >~> P₂.π₁ ⟩
+          t = P₃.⟨ P₄.π₀ >~> P₁.π₀ , P₂.⟨ P₄.π₀ >~> P₁.π₁ , P₄.π₁ ⟩ ⟩
