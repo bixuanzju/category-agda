@@ -1,12 +1,12 @@
 
 {-# OPTIONS --type-in-type #-}
 
-module TerminalDef where
+module Terminals where
 
 open import Prelude
 open import Categories
-open import FunctorDef
-open import MonicDef
+open import Functors
+open import Monics
 
 
 

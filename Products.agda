@@ -2,12 +2,12 @@
 
 open import Prelude
 open import Categories
-open import FunctorDef
-open import MonicDef
-open import TerminalDef
+open import Functors
+open import Monics
+open import Terminals
 
 
-module ProductDef (C : Category) where
+module Products (C : Category) where
 
 ----------------------------------------------------------------------------
 -- Products

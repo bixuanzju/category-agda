@@ -1,6 +1,6 @@
 {-# OPTIONS --type-in-type #-}
 
-module FunctorDef where
+module Functors where
 
 open import Prelude
 open import Categories

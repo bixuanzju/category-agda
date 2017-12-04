@@ -1,11 +1,11 @@
 
 {-# OPTIONS --type-in-type #-}
 
-module MonicDef where
+module Monics where
 
 open import Prelude
 open import Categories
-open import FunctorDef
+open import Functors
 
 
 ----------------------------------------------------------------------------

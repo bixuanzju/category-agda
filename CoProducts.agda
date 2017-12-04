@@ -4,11 +4,11 @@
 
 open import Prelude
 open import Categories
-open import FunctorDef
-open import MonicDef
-open import TerminalDef
+open import Functors
+open import Monics
+open import Terminals
 
-module CoProductDef (C : Category )where
+module CoProducts (C : Category )where
 
 
 
